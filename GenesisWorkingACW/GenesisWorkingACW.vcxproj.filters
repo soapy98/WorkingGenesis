@@ -1,0 +1,293 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>c7386a51-a8cf-4db6-9528-8fe953a9febb</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Assets">
+      <UniqueIdentifier>e3cd7b99-1f45-4af5-a5b5-8a675eb207cf</UniqueIdentifier>
+      <Extensions>bmp;fbx;gif;jpg;jpeg;tga;tiff;tif;png</Extensions>
+    </Filter>
+    <Filter Include="Content">
+      <UniqueIdentifier>30691d61-ab5d-45d4-9c3d-df2923140935</UniqueIdentifier>
+    </Filter>
+    <ClInclude Include="Common\DirectXHelper.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\StepTimer.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\DeviceResources.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClCompile Include="Common\DeviceResources.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClInclude Include="Content\Sample3DSceneRenderer.h">
+      <Filter>Content</Filter>
+    </ClInclude>
+    <ClInclude Include="Content\SampleFpsTextRenderer.h">
+      <Filter>Content</Filter>
+    </ClInclude>
+    <ClInclude Include="Content\ShaderStructures.h">
+      <Filter>Content</Filter>
+    </ClInclude>
+    <ClCompile Include="Content\Sample3DSceneRenderer.cpp">
+      <Filter>Content</Filter>
+    </ClCompile>
+    <ClCompile Include="Content\SampleFpsTextRenderer.cpp">
+      <Filter>Content</Filter>
+    </ClCompile>
+    <Image Include="Assets\LockScreenLogo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\SplashScreen.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square150x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Wide310x150Logo.scale-200.png">
+      <Filter>Assets</Filter>
+    </Image>
+    <Filter Include="Content\StarrySky">
+      <UniqueIdentifier>{89ffbd0b-37d1-41ab-80f6-bc8495deb2e4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Content\TessSphere">
+      <UniqueIdentifier>{d181916a-d385-488a-8125-1082d4866035}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Content\Pottery">
+      <UniqueIdentifier>{467890c5-0fb8-46dd-8546-ab70778f6995}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Content\Billboard">
+      <UniqueIdentifier>{4dab2cf6-b58d-40a7-bcd3-7f932de7e80f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Content\Terrain">
+      <UniqueIdentifier>{790fe053-d8d6-4767-93f0-b0b8e3f78ec6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Content\ShinyObjs">
+      <UniqueIdentifier>{569635d2-1fce-413f-a1c6-08e9469e2293}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Content\RayMarchObjs">
+      <UniqueIdentifier>{43fcee9d-547f-4beb-94b2-9fa1babfc0d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Content\Infinite">
+      <UniqueIdentifier>{e73239d8-de47-4177-9e9f-9323441fb60e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Content\Torus">
+      <UniqueIdentifier>{4c7cc341-a222-4326-9a81-d73c009e9aa3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Content\Dragon">
+      <UniqueIdentifier>{844d3b3b-d808-498e-a42a-1fe8979cf89c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Content\FloatingStrip">
+      <UniqueIdentifier>{a599b724-d8f5-4ced-80f0-d67cdf82c6a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Content\Explode">
+      <UniqueIdentifier>{294eeddb-1825-4b7a-b82c-678b31b0d534}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="App.cpp" />
+    <ClCompile Include="GenesisWorkingACWMain.cpp" />
+    <ClCompile Include="pch.cpp" />
+    <ClCompile Include="StarrySky.cpp">
+      <Filter>Content\StarrySky</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Content</Filter>
+    </ClCompile>
+    <ClCompile Include="BillBoard.cpp">
+      <Filter>Content\Billboard</Filter>
+    </ClCompile>
+    <ClCompile Include="AncientPottery.cpp">
+      <Filter>Content\Pottery</Filter>
+    </ClCompile>
+    <ClCompile Include="Terrain.cpp">
+      <Filter>Content\Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="ShinyObjects.cpp">
+      <Filter>Content\ShinyObjs</Filter>
+    </ClCompile>
+    <ClCompile Include="ImplicitRayModels.cpp">
+      <Filter>Content\RayMarchObjs</Filter>
+    </ClCompile>
+    <ClCompile Include="Torus.cpp">
+      <Filter>Content\Torus</Filter>
+    </ClCompile>
+    <ClCompile Include="TesseltatedSphere.cpp">
+      <Filter>Content\TessSphere</Filter>
+    </ClCompile>
+    <ClCompile Include="Dragon.cpp">
+      <Filter>Content\Dragon</Filter>
+    </ClCompile>
+    <ClCompile Include="Explode.cpp">
+      <Filter>Content\Explode</Filter>
+    </ClCompile>
+    <ClCompile Include="Float.cpp">
+      <Filter>Content\FloatingStrip</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="App.h" />
+    <ClInclude Include="GenesisWorkingACWMain.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="StarrySky.h">
+      <Filter>Content\StarrySky</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Content</Filter>
+    </ClInclude>
+    <ClInclude Include="AncientPottery.h">
+      <Filter>Content\Pottery</Filter>
+    </ClInclude>
+    <ClInclude Include="Terrain.h">
+      <Filter>Content\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="ShinyObjects.h">
+      <Filter>Content\ShinyObjs</Filter>
+    </ClInclude>
+    <ClInclude Include="ImplicitRayModels.h">
+      <Filter>Content\RayMarchObjs</Filter>
+    </ClInclude>
+    <ClInclude Include="BillBoard.h">
+      <Filter>Content\Billboard</Filter>
+    </ClInclude>
+    <ClInclude Include="Torus.h">
+      <Filter>Content\Torus</Filter>
+    </ClInclude>
+    <ClInclude Include="TesseltatedSphere.h">
+      <Filter>Content\TessSphere</Filter>
+    </ClInclude>
+    <ClInclude Include="Dragon.h">
+      <Filter>Content\Dragon</Filter>
+    </ClInclude>
+    <ClInclude Include="Explode.h">
+      <Filter>Content\Explode</Filter>
+    </ClInclude>
+    <ClInclude Include="Float.h">
+      <Filter>Content\FloatingStrip</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Assets\StoreLogo.png">
+      <Filter>Assets</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="PotteryDS.hlsl">
+      <Filter>Content\Pottery</Filter>
+    </FxCompile>
+    <FxCompile Include="PotteryHS.hlsl">
+      <Filter>Content\Pottery</Filter>
+    </FxCompile>
+    <FxCompile Include="PotteryVS.hlsl">
+      <Filter>Content\Pottery</Filter>
+    </FxCompile>
+    <FxCompile Include="PotteryPS.hlsl">
+      <Filter>Content\Pottery</Filter>
+    </FxCompile>
+    <FxCompile Include="BBGS.hlsl">
+      <Filter>Content\Billboard</Filter>
+    </FxCompile>
+    <FxCompile Include="BBPS.hlsl">
+      <Filter>Content\Billboard</Filter>
+    </FxCompile>
+    <FxCompile Include="BBVS.hlsl">
+      <Filter>Content\Billboard</Filter>
+    </FxCompile>
+    <FxCompile Include="StarryPS.hlsl">
+      <Filter>Content\StarrySky</Filter>
+    </FxCompile>
+    <FxCompile Include="StarryVS.hlsl">
+      <Filter>Content\StarrySky</Filter>
+    </FxCompile>
+    <FxCompile Include="TousVS.hlsl">
+      <Filter>Content\Torus</Filter>
+    </FxCompile>
+    <FxCompile Include="TousPS.hlsl">
+      <Filter>Content\Torus</Filter>
+    </FxCompile>
+    <FxCompile Include="TousDS.hlsl">
+      <Filter>Content\Torus</Filter>
+    </FxCompile>
+    <FxCompile Include="TousHS.hlsl">
+      <Filter>Content\Torus</Filter>
+    </FxCompile>
+    <FxCompile Include="RayMarchObjPS.hlsl">
+      <Filter>Content\RayMarchObjs</Filter>
+    </FxCompile>
+    <FxCompile Include="ImplicitVS.hlsl">
+      <Filter>Content\RayMarchObjs</Filter>
+    </FxCompile>
+    <FxCompile Include="ShinyPS.hlsl">
+      <Filter>Content\ShinyObjs</Filter>
+    </FxCompile>
+    <FxCompile Include="TessVS.hlsl">
+      <Filter>Content\TessSphere</Filter>
+    </FxCompile>
+    <FxCompile Include="TessPS.hlsl">
+      <Filter>Content\TessSphere</Filter>
+    </FxCompile>
+    <FxCompile Include="TessHS.hlsl">
+      <Filter>Content\TessSphere</Filter>
+    </FxCompile>
+    <FxCompile Include="TessDS.hlsl">
+      <Filter>Content\TessSphere</Filter>
+    </FxCompile>
+    <FxCompile Include="TerrainPS.hlsl">
+      <Filter>Content\Terrain</Filter>
+    </FxCompile>
+    <FxCompile Include="TPS.hlsl">
+      <Filter>Content\Terrain</Filter>
+    </FxCompile>
+    <FxCompile Include="DragonVS.hlsl">
+      <Filter>Content\Dragon</Filter>
+    </FxCompile>
+    <FxCompile Include="DragonPS.hlsl">
+      <Filter>Content\Dragon</Filter>
+    </FxCompile>
+    <FxCompile Include="DragonHS.hlsl">
+      <Filter>Content\Dragon</Filter>
+    </FxCompile>
+    <FxCompile Include="DragonDS.hlsl">
+      <Filter>Content\Dragon</Filter>
+    </FxCompile>
+    <FxCompile Include="CamTessSphere.hlsl">
+      <Filter>Content\TessSphere</Filter>
+    </FxCompile>
+    <FxCompile Include="FloatVS.hlsl">
+      <Filter>Content\FloatingStrip</Filter>
+    </FxCompile>
+    <FxCompile Include="FloatPS.hlsl">
+      <Filter>Content\FloatingStrip</Filter>
+    </FxCompile>
+    <FxCompile Include="FloatHS.hlsl">
+      <Filter>Content\FloatingStrip</Filter>
+    </FxCompile>
+    <FxCompile Include="FloatDS.hlsl">
+      <Filter>Content\FloatingStrip</Filter>
+    </FxCompile>
+    <FxCompile Include="ExplodePS.hlsl">
+      <Filter>Content\Explode</Filter>
+    </FxCompile>
+    <FxCompile Include="ExplodeHS.hlsl">
+      <Filter>Content\Explode</Filter>
+    </FxCompile>
+    <FxCompile Include="ExplodeGS.hlsl">
+      <Filter>Content\Explode</Filter>
+    </FxCompile>
+    <FxCompile Include="ExplodeDS.hlsl">
+      <Filter>Content\Explode</Filter>
+    </FxCompile>
+  </ItemGroup>
+</Project>
