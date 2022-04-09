@@ -1,4 +1,8 @@
-
+cbuffer TotalTimeConstantBuffer : register(b0)
+{
+    float time;
+    float3 pad;
+}
 // Per-vertex data used as input to the vertex shader.
 struct VertexShaderInput
 {
@@ -15,8 +19,10 @@ struct HullShaderInput
 HullShaderInput main(VertexShaderInput input)
 {
     HullShaderInput output;
+    float3 pos = input.position;
+    
+    output.position = pos;
 
-    output.position = input.position;
-
+    //output.position.y += cos(time);
     return output;
 }

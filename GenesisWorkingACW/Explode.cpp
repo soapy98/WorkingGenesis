@@ -1,11 +1,10 @@
 #include "pch.h"
 #include "Explode.h"
-#include "pch.h"
 #include <Common/DirectXHelper.h>
 
 using namespace GenesisWorkingACW;
 using namespace DirectX;
-Explode::Explode(const std::shared_ptr<DX::DeviceResources>& deviceResources) :m_deviceResources(deviceResources), m_position(0, 0,1 ), m_rotation(0.0f, 0.0f, 0.0f), m_scale(.6f, .6f, .6f)
+Explode::Explode(const std::shared_ptr<DX::DeviceResources>& deviceResources) :m_deviceResources(deviceResources), m_position(0, 0, 4), m_rotation(0.0f, 0.0f, 0.0f), m_scale(1.4f, 0.4f, 0.4f)
 {
 	CreateDeviceDependentResources();
 }
@@ -109,8 +108,7 @@ void Explode::CreateDeviceDependentResources()
 	auto createCubeTask = (createPSTask && createVSTask && createGSTask && createDSTask && createHSTask).then([this]() {
 
 		// Load mesh vertices. Each vertex has a position and a color.
-		static  VertexPosition cubeVertices[] = { 
-			{XMFLOAT3(-0.5f, -0.5f, -0.5f)},
+		static  VertexPosition cubeVertices[] = { {XMFLOAT3(-0.5f, -0.5f, -0.5f)},
 			{XMFLOAT3(-0.5f, -0.5f,  0.5f)},
 			{XMFLOAT3(-0.5f,  0.5f, -0.5f)},
 			{XMFLOAT3(-0.5f,  0.5f,  0.5f)},
@@ -215,7 +213,6 @@ void Explode::Update(DX::StepTimer const& timer)
 void Explode::Render()
 {
 	// Loading is asynchronous. Only draw geometry after it's loaded.
-	// Loading is asynchronous. Only draw geometry after it's loaded.
 	if (!m_loadingComplete)
 	{
 		return;
@@ -223,7 +220,7 @@ void Explode::Render()
 
 	auto context = m_deviceResources->GetD3DDeviceContext();
 
-	// Prepare constant buffers to send it to the graphics device.
+	// Prepare the constant buffer to send it to the graphics device.
 	context->UpdateSubresource1(
 		m_MVPBuffer.Get(),
 		0,
@@ -233,7 +230,6 @@ void Explode::Render()
 		0,
 		0
 	);
-
 	context->UpdateSubresource1(
 		m_cameraBuffer.Get(),
 		0,
@@ -253,9 +249,6 @@ void Explode::Render()
 		0
 	);
 
-
-
-
 	// Each vertex is one instance of the VertexPositionColor struct.
 	UINT stride = sizeof(VertexPosition);
 	UINT offset = 0;
@@ -268,103 +261,112 @@ void Explode::Render()
 	);
 
 	context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
-	//context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
-	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+
+	//context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
 	context->IASetInputLayout(m_inputLayout.Get());
-	// Attach our vertex shader.
 
+	// Attach our vertex shader.
 	context->VSSetShader(
 		m_vertexShader.Get(),
 		nullptr,
 		0
 	);
-
-
-
-	// Send the constant buffer to the graphics device.
-
+	context->VSSetConstantBuffers(
+		0,
+		1,
+		m_MVPBuffer.GetAddressOf()
+	);
+	context->VSSetConstantBuffers(
+		1,
+		1,
+		m_cameraBuffer.GetAddressOf()
+	);
+	context->VSSetConstantBuffers(
+		2,
+		1,
+		m_timebuffer.GetAddressOf()
+	);
 	context->GSSetShader(
 		m_geoShader.Get(),
 		nullptr,
 		0
 	);
-
-	context->GSSetConstantBuffers1(
+	context->GSSetConstantBuffers(
 		0,
 		1,
-		m_MVPBuffer.GetAddressOf(),
-		nullptr,
-		nullptr
+		m_MVPBuffer.GetAddressOf()
 	);
-	context->GSSetConstantBuffers1(
+	context->GSSetConstantBuffers(
 		1,
 		1,
-		m_cameraBuffer.GetAddressOf(),
-		nullptr,
-		nullptr
+		m_cameraBuffer.GetAddressOf()
 	);
-	context->GSSetConstantBuffers1(
+	context->GSSetConstantBuffers(
 		2,
 		1,
-		m_timebuffer.GetAddressOf(),
-		nullptr,
-		nullptr
+		m_timebuffer.GetAddressOf()
 	);
-
-	//context->HSSetShader(
-	//	m_hullShader.Get(),
-	//	nullptr,
-	//	0
-	//);
-
-	//context->DSSetShader(
-	//	m_domainShader.Get(),
-	//	nullptr,
-	//	0
-	//);
-
-	//context->DSSetConstantBuffers1(
-	//	0,
-	//	1,
-	//	m_MVPBuffer.GetAddressOf(),
-	//	nullptr,
-	//	nullptr
-	//);
-	//context->DSSetConstantBuffers1(
-	//	1,
-	//	1,
-	//	m_cameraBuffer.GetAddressOf(),
-	//	nullptr,
-	//	nullptr
-	//);
-	//context->DSSetConstantBuffers1(
-	//	2,
-	//	1,
-	//	m_timebuffer.GetAddressOf(),
-	//	nullptr,
-	//	nullptr
-	//);
-
-	//
-
+	context->DSSetShader(
+		m_domainShader.Get(),
+		nullptr,
+		0
+	);
+	context->DSSetConstantBuffers(
+		0,
+		1,
+		m_MVPBuffer.GetAddressOf()
+	);
+	context->DSSetConstantBuffers(
+		1,
+		1,
+		m_cameraBuffer.GetAddressOf()
+	);
+	context->DSSetConstantBuffers(
+		2,
+		1,
+		m_timebuffer.GetAddressOf()
+	);
+	context->HSSetShader(
+		m_hullShader.Get(),
+		nullptr,
+		0
+	);
 	// Attach our pixel shader.
 	context->PSSetShader(
 		m_pixelShader.Get(),
 		nullptr,
 		0
 	);
+	context->PSSetConstantBuffers(
+		0,
+		1,
+		m_MVPBuffer.GetAddressOf()
+	);
+	context->PSSetConstantBuffers(
+		1,
+		1,
+		m_cameraBuffer.GetAddressOf()
+	);
 
-
+	context->PSSetConstantBuffers(
+		2,
+		1,
+		m_timebuffer.GetAddressOf()
+	);
+	
 	// Draw the objects.
 	context->DrawIndexed(
 		m_indexCount,
-		0,0
+		0, 0
+
 	);
-	/*context->Draw(
-		m_indexCount,
-		0
-	);*/
+	//context->Draw(
+	//	m_indexCount,
+	//	0
+
+	//);
 }
 
 void Explode::ReleaseDeviceDependentResources()

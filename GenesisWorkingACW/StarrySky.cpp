@@ -5,7 +5,7 @@
 
 using namespace GenesisWorkingACW;
 using namespace DirectX;
-StarrySky::StarrySky(const std::shared_ptr<DX::DeviceResources>& deviceResources) :m_deviceResources(deviceResources), m_position(0, 0, 0), m_rotation(0.0f, 0.0f, 0.0f), m_scale(1.4f, 3.4f, 3.4f)
+StarrySky::StarrySky(const std::shared_ptr<DX::DeviceResources>& deviceResources) :m_deviceResources(deviceResources), m_position(0, 0, 0), m_rotation(0.0f, 0.0f, 0.0f), m_scale(.4f, .4f, .4f)
 {
 	CreateDeviceDependentResources();
 }
@@ -62,6 +62,14 @@ void StarrySky::CreateDeviceDependentResources()
 				&m_MVPBuffer
 			)
 		);
+		CD3D11_BUFFER_DESC timeCB(sizeof(TotalTimeConstantBuffer), D3D11_BIND_CONSTANT_BUFFER);
+		DX::ThrowIfFailed(
+			m_deviceResources->GetD3DDevice()->CreateBuffer(
+				&timeCB,
+				nullptr,
+				&m_timeBuffer
+			)
+		);
 
 		});
 
@@ -70,337 +78,19 @@ void StarrySky::CreateDeviceDependentResources()
 	auto createCubeTask = (createPSTask && createVSTask).then([this]() {
 
 		// Load mesh vertices. Each vertex has a position and a color.
-		static const VertexPosition cubeVertices[] = {
-			// rim: [0,192]
-		{XMFLOAT3(0,-1.4,2.4)},
-		{XMFLOAT3(0.784,-1.4,2.4)},
-		{XMFLOAT3(1.4,-0.784,2.4)},
-		{XMFLOAT3(1.4,0,2.4)},
-		{XMFLOAT3(0,-1.3375,2.53125)},
-		{XMFLOAT3(0.749,-1.3375,2.53125)},
-		{XMFLOAT3(1.3375,-0.749,2.53125)},
-		{XMFLOAT3(1.3375,0,2.53125)},
-		{XMFLOAT3(0,-1.4375,2.53125)},
-		{XMFLOAT3(0.805,-1.4375,2.53125)},
-		{XMFLOAT3(1.4375,-0.805,2.53125)},
-		{XMFLOAT3(1.4375,0,2.53125)},
-		{XMFLOAT3(0,-1.5,2.4)},
-		{XMFLOAT3(0.84,-1.5,2.4)},
-		{XMFLOAT3(1.5,-0.84,2.4)},
-		{XMFLOAT3(1.5,0,2.4)},
-		{XMFLOAT3(-1.4,0,2.4)},
-		{XMFLOAT3(-1.4,-0.784,2.4)},
-		{XMFLOAT3(-0.784,-1.4,2.4)},
-		{XMFLOAT3(0,-1.4,2.4)},
-		{XMFLOAT3(-1.3375,0,2.53125)},
-		{XMFLOAT3(-1.3375,-0.749,2.53125)},
-		{XMFLOAT3(-0.749,-1.3375,2.53125)},
-		{XMFLOAT3(0,-1.3375,2.53125)},
-		{XMFLOAT3(-1.4375,0,2.53125)},
-		{XMFLOAT3(-1.4375,-0.805,2.53125)},
-		{XMFLOAT3(-0.805,-1.4375,2.53125)},
-		{XMFLOAT3(0,-1.4375,2.53125)},
-		{XMFLOAT3(-1.5,0,2.4)},
-		{XMFLOAT3(-1.5,-0.84,2.4)},
-		{XMFLOAT3(-0.84,-1.5,2.4)},
-		{XMFLOAT3(0,-1.5,2.4)},
-		{XMFLOAT3(1.4,0,2.4)},
-		{XMFLOAT3(1.4,0.784,2.4)},
-		{XMFLOAT3(0.784,1.4,2.4)},
-		{XMFLOAT3(0,1.4,2.4)},
-		{XMFLOAT3(1.3375,0,2.53125)},
-		{XMFLOAT3(1.3375,0.749,2.53125)},
-		{XMFLOAT3(0.749,1.3375,2.53125)},
-		{XMFLOAT3(0,1.3375,2.53125)},
-		{XMFLOAT3(1.4375,0,2.53125)},
-		{XMFLOAT3(1.4375,0.805,2.53125)},
-		{XMFLOAT3(0.805,1.4375,2.53125)},
-		{XMFLOAT3(0,1.4375,2.53125)},
-		{XMFLOAT3(1.5,0,2.4)},
-		{XMFLOAT3(1.5,0.84,2.4)},
-		{XMFLOAT3(0.84,1.5,2.4)},
-		{XMFLOAT3(0,1.5,2.4)},
-		{XMFLOAT3(0,1.4,2.4)},
-		{XMFLOAT3(-0.784,1.4,2.4)},
-		{XMFLOAT3(-1.4,0.784,2.4)},
-		{XMFLOAT3(-1.4,0,2.4)},
-		{XMFLOAT3(0,1.3375,2.53125)},
-		{XMFLOAT3(-0.749,1.3375,2.53125)},
-		{XMFLOAT3(-1.3375,0.749,2.53125)},
-		{XMFLOAT3(-1.3375,0,2.53125)},
-		{XMFLOAT3(0,1.4375,2.53125)},
-		{XMFLOAT3(-0.805,1.4375,2.53125)},
-		{XMFLOAT3(-1.4375,0.805,2.53125)},
-		{XMFLOAT3(-1.4375,0,2.53125)},
-		{XMFLOAT3(0,1.5,2.4)},
-		{XMFLOAT3(-0.84,1.5,2.4)},
-		{XMFLOAT3(-1.5,0.84,2.4)},
-		{XMFLOAT3(-1.5,0,2.4)},
-
-		// body: [192,576]
-		{XMFLOAT3(0,-1.5,2.4)},
-		{XMFLOAT3(0.84,-1.5,2.4)},
-		{XMFLOAT3(1.5,-0.84,2.4)},
-		{XMFLOAT3(1.5,0,2.4)},
-		{XMFLOAT3(0,-1.75,1.875)},
-		{XMFLOAT3(0.98,-1.75,1.875)},
-		{XMFLOAT3(1.75,-0.98,1.875)},
-		{XMFLOAT3(1.75,0,1.875)},
-		{XMFLOAT3(0,-2,1.35)},
-		{XMFLOAT3(1.12,-2,1.35)},
-		{XMFLOAT3(2,-1.12,1.35)},
-		{XMFLOAT3(2,0,1.35)},
-		{XMFLOAT3(0,-2,0.9)},
-		{XMFLOAT3(1.12,-2,0.9)},
-		{XMFLOAT3(2,-1.12,0.9)},
-		{XMFLOAT3(2,0,0.9)},
-		{XMFLOAT3(-1.5,0,2.4)},
-		{XMFLOAT3(-1.5,-0.84,2.4)},
-		{XMFLOAT3(-0.84,-1.5,2.4)},
-		{XMFLOAT3(0,-1.5,2.4)},
-		{XMFLOAT3(-1.75,0,1.875)},
-		{XMFLOAT3(-1.75,-0.98,1.875)},
-		{XMFLOAT3(-0.98,-1.75,1.875)},
-		{XMFLOAT3(0,-1.75,1.875)},
-		{XMFLOAT3(-2,0,1.35)},
-		{XMFLOAT3(-2,-1.12,1.35)},
-		{XMFLOAT3(-1.12,-2,1.35)},
-		{XMFLOAT3(0,-2,1.35)},
-		{XMFLOAT3(-2,0,0.9)},
-		{XMFLOAT3(-2,-1.12,0.9)},
-		{XMFLOAT3(-1.12,-2,0.9)},
-		{XMFLOAT3(0,-2,0.9)},
-		{XMFLOAT3(1.5,0,2.4)},
-		{XMFLOAT3(1.5,0.84,2.4)},
-		{XMFLOAT3(0.84,1.5,2.4)},
-		{XMFLOAT3(0,1.5,2.4)},
-		{XMFLOAT3(1.75,0,1.875)},
-		{XMFLOAT3(1.75,0.98,1.875)},
-		{XMFLOAT3(0.98,1.75,1.875)},
-		{XMFLOAT3(0,1.75,1.875)},
-		{XMFLOAT3(2,0,1.35)},
-		{XMFLOAT3(2,1.12,1.35)},
-		{XMFLOAT3(1.12,2,1.35)},
-		{XMFLOAT3(0,2,1.35)},
-		{XMFLOAT3(2,0,0.9)},
-		{XMFLOAT3(2,1.12,0.9)},
-		{XMFLOAT3(1.12,2,0.9)},
-		{XMFLOAT3(0,2,0.9)},
-		{XMFLOAT3(0,1.5,2.4)},
-		{XMFLOAT3(-0.84,1.5,2.4)},
-		{XMFLOAT3(-1.5,0.84,2.4)},
-		{XMFLOAT3(-1.5,0,2.4)},
-		{XMFLOAT3(0,1.75,1.875)},
-		{XMFLOAT3(-0.98,1.75,1.875)},
-		{XMFLOAT3(-1.75,0.98,1.875)},
-		{XMFLOAT3(-1.75,0,1.875)},
-		{XMFLOAT3(0,2,1.35)},
-		{XMFLOAT3(-1.12,2,1.35)},
-		{XMFLOAT3(-2,1.12,1.35)},
-		{XMFLOAT3(-2,0,1.35)},
-		{XMFLOAT3(0,2,0.9)},
-		{XMFLOAT3(-1.12,2,0.9)},
-		{XMFLOAT3(-2,1.12,0.9)},
-		{XMFLOAT3(-2,0,0.9)},
-		{XMFLOAT3(0,-2,0.9)},
-		{XMFLOAT3(1.12,-2,0.9)},
-		{XMFLOAT3(2,-1.12,0.9)},
-		{XMFLOAT3(2,0,0.9)},
-		{XMFLOAT3(0,-2,0.45)},
-		{XMFLOAT3(1.12,-2,0.45)},
-		{XMFLOAT3(2,-1.12,0.45)},
-		{XMFLOAT3(2,0,0.45)},
-		{XMFLOAT3(0,-1.5,0.225)},
-		{XMFLOAT3(0.84,-1.5,0.225)},
-		{XMFLOAT3(1.5,-0.84,0.225)},
-		{XMFLOAT3(1.5,0,0.225)},
-		{XMFLOAT3(0,-1.5,0.15)},
-		{XMFLOAT3(0.84,-1.5,0.15)},
-		{XMFLOAT3(1.5,-0.84,0.15)},
-		{XMFLOAT3(1.5,0,0.15)},
-		{XMFLOAT3(-2,0,0.9)},
-		{XMFLOAT3(-2,-1.12,0.9)},
-		{XMFLOAT3(-1.12,-2,0.9)},
-		{XMFLOAT3(0,-2,0.9)},
-		{XMFLOAT3(-2,0,0.45)},
-		{XMFLOAT3(-2,-1.12,0.45)},
-		{XMFLOAT3(-1.12,-2,0.45)},
-		{XMFLOAT3(0,-2,0.45)},
-		{XMFLOAT3(-1.5,0,0.225)},
-		{XMFLOAT3(-1.5,-0.84,0.225)},
-		{XMFLOAT3(-0.84,-1.5,0.225)},
-		{XMFLOAT3(0,-1.5,0.225)},
-		{XMFLOAT3(-1.5,0,0.15)},
-		{XMFLOAT3(-1.5,-0.84,0.15)},
-		{XMFLOAT3(-0.84,-1.5,0.15)},
-		{XMFLOAT3(0,-1.5,0.15)},
-		{XMFLOAT3(2,0,0.9)},
-		{XMFLOAT3(2,1.12,0.9)},
-		{XMFLOAT3(1.12,2,0.9)},
-		{XMFLOAT3(0,2,0.9)},
-		{XMFLOAT3(2,0,0.45)},
-		{XMFLOAT3(2,1.12,0.45)},
-		{XMFLOAT3(1.12,2,0.45)},
-		{XMFLOAT3(0,2,0.45)},
-		{XMFLOAT3(1.5,0,0.225)},
-		{XMFLOAT3(1.5,0.84,0.225)},
-		{XMFLOAT3(0.84,1.5,0.225)},
-		{XMFLOAT3(0,1.5,0.225)},
-		{XMFLOAT3(1.5,0,0.15)},
-		{XMFLOAT3(1.5,0.84,0.15)},
-		{XMFLOAT3(0.84,1.5,0.15)},
-		{XMFLOAT3(0,1.5,0.15)},
-		{XMFLOAT3(0,2,0.9)},
-		{XMFLOAT3(-1.12,2,0.9)},
-		{XMFLOAT3(-2,1.12,0.9)},
-		{XMFLOAT3(-2,0,0.9)},
-		{XMFLOAT3(0,2,0.45)},
-		{XMFLOAT3(-1.12,2,0.45)},
-		{XMFLOAT3(-2,1.12,0.45)},
-		{XMFLOAT3(-2,0,0.45)},
-		{XMFLOAT3(0,1.5,0.225)},
-		{XMFLOAT3(-0.84,1.5,0.225)},
-		{XMFLOAT3(-1.5,0.84,0.225)},
-		{XMFLOAT3(-1.5,0,0.225)},
-		{XMFLOAT3(0,1.5,0.15)},
-		{XMFLOAT3(-0.84,1.5,0.15)},
-		{XMFLOAT3(-1.5,0.84,0.15)},
-		{XMFLOAT3(-1.5,0,0.15)},
-
-		// bottom: [960,1152]
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(1.425,0,0)},
-		{XMFLOAT3(1.425,-0.798,0)},
-		{XMFLOAT3(0.798,-1.425,0)},
-		{XMFLOAT3(0,-1.425,0)},
-		{XMFLOAT3(1.5,0,0.075)},
-		{XMFLOAT3(1.5,-0.84,0.075)},
-		{XMFLOAT3(0.84,-1.5,0.075)},
-		{XMFLOAT3(0,-1.5,0.075)},
-		{XMFLOAT3(1.5,0,0.15)},
-		{XMFLOAT3(1.5,-0.84,0.15)},
-		{XMFLOAT3(0.84,-1.5,0.15)},
-		{XMFLOAT3(0,-1.5,0.15)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(0,-1.425,0)},
-		{XMFLOAT3(-0.798,-1.425,0)},
-		{XMFLOAT3(-1.425,-0.798,0)},
-		{XMFLOAT3(-1.425,0,0)},
-		{XMFLOAT3(0,-1.5,0.075)},
-		{XMFLOAT3(-0.84,-1.5,0.075)},
-		{XMFLOAT3(-1.5,-0.84,0.075)},
-		{XMFLOAT3(-1.5,0,0.075)},
-		{XMFLOAT3(0,-1.5,0.15)},
-		{XMFLOAT3(-0.84,-1.5,0.15)},
-		{XMFLOAT3(-1.5,-0.84,0.15)},
-		{XMFLOAT3(-1.5,0,0.15)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(0,1.425,0)},
-		{XMFLOAT3(0.798,1.425,0)},
-		{XMFLOAT3(1.425,0.798,0)},
-		{XMFLOAT3(1.425,0,0)},
-		{XMFLOAT3(0,1.5,0.075)},
-		{XMFLOAT3(0.84,1.5,0.075)},
-		{XMFLOAT3(1.5,0.84,0.075)},
-		{XMFLOAT3(1.5,0,0.075)},
-		{XMFLOAT3(0,1.5,0.15)},
-		{XMFLOAT3(0.84,1.5,0.15)},
-		{XMFLOAT3(1.5,0.84,0.15)},
-		{XMFLOAT3(1.5,0,0.15)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(0,0,0)},
-		{XMFLOAT3(-1.425,0,0)},
-		{XMFLOAT3(-1.425,0.798,0)},
-		{XMFLOAT3(-0.798,1.425,0)},
-		{XMFLOAT3(0,1.425,0)},
-		{XMFLOAT3(-1.5,0,0.075)},
-		{XMFLOAT3(-1.5,0.84,0.075)},
-		{XMFLOAT3(-0.84,1.5,0.075)},
-		{XMFLOAT3(0,1.5,0.075)},
-		{XMFLOAT3(-1.5,0,0.15)},
-		{XMFLOAT3(-1.5,0.84,0.15)},
-		{XMFLOAT3(-0.84,1.5,0.15)},
-		{XMFLOAT3(0,1.5,0.15)},
-
-		// handle: [1152,1344]
-		{XMFLOAT3(-1.5,0,2.25)},
-		{XMFLOAT3(-1.5,-0.3,2.25)},
-		{XMFLOAT3(-1.6,-0.3,2.025)},
-		{XMFLOAT3(-1.6,0,2.025)},
-		{XMFLOAT3(-2.5,0,2.25)},
-		{XMFLOAT3(-2.5,-0.3,2.25)},
-		{XMFLOAT3(-2.3,-0.3,2.025)},
-		{XMFLOAT3(-2.3,0,2.025)},
-		{XMFLOAT3(-3,0,2.25)},
-		{XMFLOAT3(-3,-0.3,2.25)},
-		{XMFLOAT3(-2.7,-0.3,2.025)},
-		{XMFLOAT3(-2.7,0,2.025)},
-		{XMFLOAT3(-3,0,1.8)},
-		{XMFLOAT3(-3,-0.3,1.8)},
-		{XMFLOAT3(-2.7,-0.3,1.8)},
-		{XMFLOAT3(-2.7,0,1.8)},
-		{XMFLOAT3(-1.6,0,2.025)},
-		{XMFLOAT3(-1.6,0.3,2.025)},
-		{XMFLOAT3(-1.5,0.3,2.25)},
-		{XMFLOAT3(-1.5,0,2.25)},
-		{XMFLOAT3(-2.3,0,2.025)},
-		{XMFLOAT3(-2.3,0.3,2.025)},
-		{XMFLOAT3(-2.5,0.3,2.25)},
-		{XMFLOAT3(-2.5,0,2.25)},
-		{XMFLOAT3(-2.7,0,2.025)},
-		{XMFLOAT3(-2.7,0.3,2.025)},
-		{XMFLOAT3(-3,0.3,2.25)},
-		{XMFLOAT3(-3,0,2.25)},
-		{XMFLOAT3(-2.7,0,1.8)},
-		{XMFLOAT3(-2.7,0.3,1.8)},
-		{XMFLOAT3(-3,0.3,1.8)},
-		{XMFLOAT3(-3,0,1.8)},
-		{XMFLOAT3(-3,0,1.8)},
-		{XMFLOAT3(-3,-0.3,1.8)},
-		{XMFLOAT3(-2.7,-0.3,1.8)},
-		{XMFLOAT3(-2.7,0,1.8)},
-		{XMFLOAT3(-3,0,1.35)},
-		{XMFLOAT3(-3,-0.3,1.35)},
-		{XMFLOAT3(-2.7,-0.3,1.575)},
-		{XMFLOAT3(-2.7,0,1.575)},
-		{XMFLOAT3(-2.65,0,0.9375)},
-		{XMFLOAT3(-2.65,-0.3,0.9375)},
-		{XMFLOAT3(-2.5,-0.3,1.125)},
-		{XMFLOAT3(-2.5,0,1.125)},
-		{XMFLOAT3(-1.9,0,0.6)},
-		{XMFLOAT3(-1.9,-0.3,0.6)},
-		{XMFLOAT3(-2,-0.3,0.9)},
-		{XMFLOAT3(-2,0,0.9)},
-		{XMFLOAT3(-2.7,0,1.8)},
-		{XMFLOAT3(-2.7,0.3,1.8)},
-		{XMFLOAT3(-3,0.3,1.8)},
-		{XMFLOAT3(-3,0,1.8)},
-		{XMFLOAT3(-2.7,0,1.575)},
-		{XMFLOAT3(-2.7,0.3,1.575)},
-		{XMFLOAT3(-3,0.3,1.35)},
-		{XMFLOAT3(-3,0,1.35)},
-		{XMFLOAT3(-2.5,0,1.125)},
-		{XMFLOAT3(-2.5,0.3,1.125)},
-		{XMFLOAT3(-2.65,0.3,0.9375)},
-		{XMFLOAT3(-2.65,0,0.9375)},
-		{XMFLOAT3(-2,0,0.9)},
-		{XMFLOAT3(-2,0.3,0.9)},
-		{XMFLOAT3(-1.9,0.3,0.6)},
-		{XMFLOAT3(-1.9,0,0.6)},
-
-
-		};
+		float PI = 3.14159;
+		// Load mesh vertices. Each vertex has a position and a color.
+		static  VertexPosition cubeVertices[600] = {};
+		XMFLOAT3 cent = { 0,0,-5 };
+		int count = 0;
+		for (int i = 0; count < 600; i++)
+		{
+			auto randX = -5 + static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / 5.f));
+			auto randY = 1.5f + static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / (5)));
+			auto randZ = static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / 5));
+			cubeVertices[count].position = XMFLOAT3((cent.x + 6 * cos(count) + 5) + randX, randY, (cent.z + 6 * sin(count) + 5) + randZ);
+			count++;
+		}
 
 
 
@@ -461,6 +151,15 @@ void StarrySky::Render()
 		0,
 		0
 	);
+	context->UpdateSubresource1(
+		m_timeBuffer.Get(),
+		0,
+		NULL,
+		&m_timeData,
+		0,
+		0,
+		0
+	);
 
 	// Each vertex is one instance of the VertexPositionColor struct.
 	UINT stride = sizeof(VertexPosition);
@@ -492,11 +191,22 @@ void StarrySky::Render()
 		m_MVPBuffer.GetAddressOf()
 	);
 
+	context->VSSetConstantBuffers(
+		1,
+		1,
+		m_timeBuffer.GetAddressOf()
+	);
+
 	// Attach our pixel shader.
 	context->PSSetShader(
 		m_pixelShader.Get(),
 		nullptr,
 		0
+	);
+	context->PSSetConstantBuffers(
+		0,
+		1,
+		m_timeBuffer.GetAddressOf()
 	);
 
 	context->DSSetShader(
@@ -525,11 +235,11 @@ void StarrySky::Render()
 void StarrySky::Update(DX::StepTimer const& timer)
 {
 	auto worldMatrix = DirectX::XMMatrixIdentity();
-	//m_rotation.x += -0.2f * timer.GetElapsedSeconds();
-	m_rotation.y += 2.f * timer.GetElapsedSeconds();
-	m_position.z += sin(timer.GetElapsedSeconds());
-	//m_timeBufferData.time = timer.GetTotalSeconds();
-	//m_timeBufferData.padding = XMFLOAT3(0, 0, 0);
+	////m_rotation.x += -0.2f * timer.GetElapsedSeconds();
+	//m_rotation.y += 2.f * timer.GetElapsedSeconds();
+	//m_position.z += sin(timer.GetElapsedSeconds());
+	m_timeData.time = timer.GetTotalSeconds();
+	m_timeData.padding = XMFLOAT3(0, 0, 0);
 	worldMatrix = XMMatrixMultiply(worldMatrix, DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z));
 	worldMatrix = XMMatrixMultiply(worldMatrix, DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationRollPitchYaw(m_rotation.x, m_rotation.y, m_rotation.z)));
 

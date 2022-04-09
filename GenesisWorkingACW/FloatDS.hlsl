@@ -26,10 +26,6 @@ struct PatchConstantOutput
 struct DomainShaderInput
 {
     float3 position : POSITION;
-    float2 tex : TEXCOORD0;
-    float3 normal : NORMAL;
-    float3 tangent : TANGENT;
-    float3 binormal : BINORMAL;
 };
 
 struct PixelShaderInput
@@ -125,33 +121,55 @@ float4 BernsteinBasis(float t)
 
     return float4(invT * invT * invT, 3.0f * t * invT * invT, 3.0f * t * t * invT, t * t * t);
 }
+float4 dBernsteinBasis(float t)
+{
+    float invT = 1.0f - t;
+
+    return float4(-3 * invT * invT, 3 * invT * invT - 6 * t * invT, 6 * t * invT - 3 * t * t, 3 * t * t);
+}
+float3 EvaluateBezier(const OutputPatch<DomainShaderInput, 4> patch,
+	float4 basisU,
+	float4 basisV)
+{
+    float3 value = float3(0, 0, 0);
+    value = basisV.x * (patch[0].position * basisU.x + basisU.y + basisU.z +  basisU.w);
+    value += basisV.y * (patch[1].position * basisU.x + basisU.y + basisU.z + basisU.w);
+    value += basisV.z *(patch[2].position * basisU.x + basisU.y + basisU.z +  basisU.w);
+    value += basisV.w *(patch[3].position * basisU.x + basisU.y + basisU.z +  basisU.w);
+
+    return value;
+}
 [domain("quad")]
 PixelShaderInput main(in PatchConstantOutput input, in const float2 domain : SV_DomainLocation, const OutputPatch<DomainShaderInput, 4> patch)
 {
     PixelShaderInput output;
-    float4 base = BernsteinBasis(domain.x);
-    output.positionW = EvaluateCubic(base);
-    //output.positionW.x = CubicHermite(domain.x * patch[0].position.x, domain.x * patch[1].position.x, domain.x * patch[2].position.x, domain.x * patch[3].position.x, 109);
-    //output.positionW.y = CubicHermite(domain.y * patch[0].position.y, domain.y * patch[1].position.y, domain.y * patch[2].position.y, domain.y * patch[3].position.y, 2);
-    output.positionW.z = 1.0f * cos((domain.y + 0.5f) * (2 * PI));
-    //output.positionW *= sin(time);
+    
+    float4 basisU = BernsteinBasis(domain.x);
+    float4 basisV = BernsteinBasis(domain.y);
+    float4 dBasisU = dBernsteinBasis(domain.x);
+    float4 dBasisV = dBernsteinBasis(domain.y);
+    output.positionW = EvaluateCubic(basisU);
+    output.tangent = EvaluateBezier(patch, dBasisU, basisV);
+    output.binormal = EvaluateBezier(patch, basisU, dBasisV);
+    output.normal = normalize(cross(output.tangent, output.binormal));
+    output.positionW.xz = 1.0f * cos((domain.y + 0.5f) * (2 * PI));
     output.viewDirection = normalize(cameraPos.xyz - output.positionW);
-    output.tex = (sign(output.positionW.xy) + 1.0) / 2.0;
-    float3 p0 = mul(float4(patch[0].position, 1.0f), model);
+    output.tex = domain;
+    //float3 p0 = mul(float4(patch[0].position, 1.0f), model);
 
-    float3 p1 = mul(float4(patch[1].position, 1.0f), model);
+    //float3 p1 = mul(float4(patch[1].position, 1.0f), model);
 
-    float3 p2 = mul(float4(patch[2].position, 1.0f), model);
-    float3 d1 = p1 - p0;
-    float3 d2 = p2 - p0;
-    output.normal = normalize(cross(d1, d2));
-    output.tex = domain.x * patch[0].tex + domain.y * patch[1].tex + domain.x * patch[2].tex + domain.y * patch[3].tex;
-    output.normal = domain.x * patch[0].normal + domain.y * patch[1].normal + domain.x * patch[2].normal + domain.y * patch[3].normal;
-    output.tangent = domain.x * patch[0].tangent + domain.y * patch[1].tangent + domain.x * patch[2].tangent + domain.y * patch[3].tangent;
-    output.binormal = domain.x * patch[0].binormal + domain.y * patch[1].binormal + domain.x * patch[2].binormal + domain.y * patch[3].binormal;
+    //float3 p2 = mul(float4(patch[2].position, 1.0f), model);
+    //float3 d1 = p1 - p0;
+    //float3 d2 = p2 - p0;
+    //output.normal = normalize(cross(d1, d2));
+    
+    //output.tex = domain.x * patch[0].tex + domain.y * patch[1].tex + domain.x * patch[2].tex + domain.y * patch[3].tex;
+    //output.normal = domain.x * patch[0].normal + domain.y * patch[1].normal + domain.x * patch[2].normal + domain.y * patch[3].normal;
+    //output.tangent = domain.x * patch[0].tangent + domain.y * patch[1].tangent + domain.x * patch[2].tangent + domain.y * patch[3].tangent;
+    //output.binormal = domain.x * patch[0].binormal + domain.y * patch[1].binormal + domain.x * patch[2].binormal + domain.y * patch[3].binormal;
 
-    output.tangent = normalize(output.tangent);
-    output.binormal = normalize(output.binormal);
+
     
     //float height = noise(cos(output.positionW.y*time) );
    
@@ -160,13 +178,13 @@ PixelShaderInput main(in PatchConstantOutput input, in const float2 domain : SV_
 
 	//Sample height map
     //Cool overlap effect
-    //float height = noise(cos(output.positionW.y * time));
-    //output.positionW += normalize(output.positionW) * (2 * (height - 0.6));
+    float height = noise(cos(output.positionW * time));
+    //output.positionW.z -= height;
     
     
     
-    float height = noise(sin(output.positionW * time));
-    //output.positionW += normalize(output.positionW) * (2 * (height - 0.6));
+    //float height = noise(output.positionW* sin(time));
+    //output.positionW += height;
     output.positionH = mul(float4(output.positionW, 1.0f), model);
     output.positionH = mul(output.positionH, view);
     output.positionH = mul(output.positionH, projection);

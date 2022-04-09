@@ -12,8 +12,11 @@
 #include "TesseltatedSphere.h"
 #include "Torus.h"
 #include "Terrain.h"
-#include "Float.h"
+#include "Floating.h"
 #include <Explode.h>
+#include <Effects.h>
+#include <BlackHole.h>
+#include <Sun.h>
 
 
 namespace GenesisWorkingACW
@@ -43,12 +46,21 @@ namespace GenesisWorkingACW
 		std::unique_ptr<Torus>m_torus;
 		std::unique_ptr<ImplicitRay> m_ImplicitRay;
 		std::unique_ptr<ShinyObjs> m_ShinyObjs;
-		std::unique_ptr<Explode>m_explode;
+		std::vector<std::unique_ptr<Explode>>m_explode;
 		std::unique_ptr<AncientPottery> m_pottery;
 		std::unique_ptr<TesseltatedSphere> m_CamTessSphere;
 		std::unique_ptr<TesseltatedSphere> m_TessSphere;
-		std::unique_ptr<Float> m_float;
+		std::unique_ptr<TesseltatedSphere> m_face;
+		std::vector<std::unique_ptr<Floating>> m_float;
 		std::unique_ptr<Terrain>m_terrain;
+
+		std::unique_ptr<Sun>m_sun;
+		std::unique_ptr<BlackHole> m_blackHole;
+		std::unique_ptr<Effects> m_frac;
+		std::unique_ptr<Effects> m_stars;
+
+
+
 		// Cached pointer to device resources.
 		std::shared_ptr<DX::DeviceResources> m_deviceResources;
 

@@ -8,11 +8,11 @@
 #include <fstream>
 #include <unordered_map>
 #include <vector>
-#include "..\Common\DirectXHelper.h"
+#include <Floating.h>
+using namespace DirectX;
 
 using namespace GenesisWorkingACW;
 
-using namespace DirectX;
 using namespace Windows::Foundation;
 
 // Loads vertex and pixel shaders from files and instantiates the cube geometry.
@@ -23,28 +23,68 @@ Sample3DSceneRenderer::Sample3DSceneRenderer(const std::shared_ptr<DX::DeviceRes
 	m_tracking(false),
 	m_deviceResources(deviceResources)
 {
+	//Required
 	auto pos = XMFLOAT3(0, 0, 1);
 	m_StarrySky = std::make_unique<StarrySky>(deviceResources);
 	m_BillBoard = std::make_unique<BillBoard>(deviceResources);
-	m_torus = std::make_unique<Torus>(deviceResources);
-	m_torus->SetPos(0, -1, 3);
 	m_ImplicitRay = std::make_unique<ImplicitRay>(deviceResources);
-	m_ShinyObjs = std::make_unique<ShinyObjs>(deviceResources);
-	m_pottery = std::make_unique<AncientPottery>(deviceResources);
-	m_terrain = std::make_unique<Terrain>(deviceResources);
-	m_TessSphere = std::make_unique<TesseltatedSphere>(deviceResources);
-	m_explode = std::make_unique<Explode>(deviceResources);
-	m_CamTessSphere = std::make_unique<TesseltatedSphere>(deviceResources);
-	m_CamTessSphere->SetPos(2, 2, 3);
-	m_TessSphere->SetPos(-2, 2, 3);
+	m_TessSphere = std::make_unique<TesseltatedSphere>(deviceResources,false);
+	m_CamTessSphere = std::make_unique<TesseltatedSphere>(deviceResources,false);
 	m_CamTessSphere->SetTessShader(true);
-	m_float = std::make_unique<Float>(deviceResources);
-	m_float->SetPos(-0.5, 1, 2);
-	m_ShinyObjs->SetPos(2, 2, 4);
-	m_pottery->SetPos(0, -3, 3);
+	m_pottery = std::make_unique<AncientPottery>(deviceResources);
+
+	m_ShinyObjs = std::make_unique<ShinyObjs>(deviceResources);
+
+	m_terrain = std::make_unique<Terrain>(deviceResources);
+	
+	//My own
+	m_torus = std::make_unique<Torus>(deviceResources);
+	m_sun = std::make_unique<Sun>(deviceResources);
+	m_blackHole = std::make_unique<BlackHole>(deviceResources);;
+	m_frac = std::make_unique<Effects>(deviceResources, L"fRAC.cso");
+	m_stars = std::make_unique<Effects>(deviceResources, L"StarsPS.cso");
+//	
+	m_explode.emplace_back(std::make_unique<Explode>(deviceResources));
+	m_explode.emplace_back(std::make_unique<Explode>(deviceResources));
+	m_explode.emplace_back(std::make_unique<Explode>(deviceResources));
+m_float.emplace_back(std::make_unique<Floating>(deviceResources));
+m_float.emplace_back(std::make_unique<Floating>(deviceResources));
+m_float.emplace_back(std::make_unique<Floating>(deviceResources));
+	//Positions
+
+	m_torus->SetPos(0, 0.3, 1.5);
+	m_CamTessSphere->SetPos(0.5, 2, 1.5);
+	m_TessSphere->SetPos(-0.5, 2, 1.5);
+	float x = -0.5, y = 2, z = 1.2;
+	float rotX = 0.0f, rotY = 90.0f, rotZ = -10.f;
+	for (auto& floa:m_float)
+	{
+		floa->SetScale(1, 1.5, 1);
+		floa->SetPos(x , y, z);
+		floa->SetRot(rotX, rotY, rotZ);
+		rotY += 25;
+			rotZ+=15;
+		/*rotX /= 2;
+		rotY += 25;*/
+	/*	rotX += 10;*/
+		//rotY += 7;
+		x += 2;
+	}
+	m_sun->SetPos(0, 0, -600);
+	m_pottery->SetPos(0, 1, 3);
+	m_ShinyObjs->SetPos(1, 2.5, -3);
+
 	m_terrain->SetPos(0, -1, 0);
+	m_blackHole->SetPos(0, 0, 700);
+	float startPosX = 2;
+	for (auto& star :m_explode)
+	{
+	star->SetPos(startPosX, 10, 0);
+	startPosX += 4;
+	}
+
+	
 	m_cam = std::make_unique<Camera>();
-	//m_dog = std::make_unique<Dog>(deviceResources);
 	CreateDeviceDependentResources();
 	CreateWindowSizeDependentResources();
 }
@@ -91,19 +131,13 @@ void Sample3DSceneRenderer::CreateWindowSizeDependentResources()
 		&m_constantBufferData.projection,
 		XMMatrixTranspose(m_cam->GetProjectionMatrix())
 	);
-	// Eye is at (0,0.7,1.5), looking at point (0,-0.1,0) with the up-vector along the y-axis.
-	static const XMVECTORF32 eye = { 0.0f, 0.7f, 2.5f, 0.0f };
-	static const XMVECTORF32 at = { 0.0f, -0.1f, 0.0f, 0.0f };
-	static const XMVECTORF32 up = { 0.0f, 1.0f, 0.0f, 0.0f };
 
-	XMStoreFloat4x4(&m_constantBufferData.view, XMMatrixTranspose(XMMatrixLookAtRH(eye, at, up)));
-
-	auto lookat = XMFLOAT3(0, -0.1, 0);
+	auto lookat = XMFLOAT3(0, 0.1, 0.1);
 	m_cam->SetLookAtPos(lookat);
-	auto pos = XMFLOAT3(0, 0.7, -2.5);
+	auto pos = XMFLOAT3(0.0f, 0.5f, -0.5f);
 	m_cam->SetPosition(XMLoadFloat3(&pos));
 
-	//XMStoreFloat4x4(&m_constantBufferData.view, XMMatrixTranspose(m_cam->GetViewMatrix()));
+	XMStoreFloat4x4(&m_constantBufferData.view, XMMatrixTranspose(m_cam->GetViewMatrix()));
 
 
 
@@ -189,10 +223,19 @@ void Sample3DSceneRenderer::Update(DX::StepTimer const& timer)
 	m_torus->Update(timer);
 	m_TessSphere->Update(timer);
 	m_terrain->Update(timer);
-	m_float->Update(timer);
+	for (auto& floa : m_float)
+	{
+		floa->Update(timer);
+	}
 	m_CamTessSphere->Update(timer);
-	m_explode->Update(timer);
-	/*m_dog->Update(timer);*/
+	for (auto& star : m_explode)
+	{
+		star->Update(timer);
+	}
+	m_sun->Update(timer);
+	m_blackHole->Update(timer);
+	m_frac->Update(timer);
+	m_stars->Update(timer);
 }
 
 
@@ -207,50 +250,105 @@ void Sample3DSceneRenderer::Render()
 	auto world = m_cam->GetViewMatrix();
 	XMStoreFloat4x4(&m_constantBufferData.view, XMMatrixTranspose(m_cam->GetViewMatrix()));
 	////auto world = XMMatrixIdentity();
-	//m_StarrySky->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
-	//m_StarrySky->SetCameraPositionConstantBuffer(cam);
-	//m_StarrySky->Render();
-	//m_BillBoard->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
-	//m_BillBoard->SetCameraPositionConstantBuffer(cam);
-	//m_BillBoard->Render();
+	////Required
+	m_stars->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_stars->SetCameraPositionConstantBuffer(cam);
+	m_stars->Render();
+		m_sun->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_sun->SetCameraPositionConstantBuffer(cam);
+	m_sun->Render();
+	m_blackHole->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_blackHole->SetCameraPositionConstantBuffer(cam);
+	m_blackHole->Render();
 
-	//m_pottery->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
-	//m_pottery->SetCameraPositionConstantBuffer(cam);
-	//m_pottery->Render();
-	auto context = m_deviceResources->GetD3DDeviceContext(); context->RSSetState(m_rast.Get());
-	//m_ImplicitRay->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
-	//m_ImplicitRay->SetCameraPositionConstantBuffer(cam);
-	//m_ImplicitRay->Render();
-	/*m_ShinyObjs->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	
+	m_terrain->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_terrain->SetCameraPositionConstantBuffer(cam);
+	m_terrain->Render();
+	m_BillBoard->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_BillBoard->SetCameraPositionConstantBuffer(cam);
+	m_BillBoard->Render();
+	m_TessSphere->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_TessSphere->SetCameraPositionConstantBuffer(cam);
+	m_TessSphere->Render();
+	m_CamTessSphere->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_CamTessSphere->SetCameraPositionConstantBuffer(cam);
+	m_CamTessSphere->Render();
+	m_pottery->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_pottery->SetCameraPositionConstantBuffer(cam);
+	m_pottery->Render();
+	for (auto& floa : m_float)
+	{
+		floa->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+		floa->SetCameraPositionConstantBuffer(cam);
+		floa->Render();
+	}
+
+//
+
+
+	
+
+m_ShinyObjs->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
 	m_ShinyObjs->SetCameraPositionConstantBuffer(cam);
-	m_ShinyObjs->Render();*/
+	m_ShinyObjs->Render();
 
-	//m_terrain->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
-	//m_terrain->SetCameraPositionConstantBuffer(cam);
-	//m_terrain->Render();
-	////////
-	//m_TessSphere->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
-	//m_TessSphere->SetCameraPositionConstantBuffer(cam);
-	//m_TessSphere->Render();
-	//m_CamTessSphere->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
-	//m_CamTessSphere->SetCameraPositionConstantBuffer(cam);
-	//m_CamTessSphere->Render();
-	//m_float->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
-	//m_float->SetCameraPositionConstantBuffer(cam);
-	//m_float->Render();
-	//m_torus->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
-	//m_torus->SetCameraPositionConstantBuffer(cam);
-	//m_torus->Render();
+	m_StarrySky->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_StarrySky->SetCameraPositionConstantBuffer(cam);
+	m_StarrySky->Render();
+	
+	
 
+	
+//Implicit effects	
 
-	m_explode->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
-	m_explode->SetCameraPositionConstantBuffer(cam);
-	m_explode->Render();
-	//m_dog->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
-	//m_dog->SetCameraPositionConstantBuffer(cam);
-	//m_dog->Render();
+auto context = m_deviceResources->GetD3DDeviceContext(); context->RSSetState(m_rast.Get());
+	
+
+	// 
+//	//my Own
+m_TessSphere->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_TessSphere->SetCameraPositionConstantBuffer(cam);
+	m_TessSphere->Render();
+	m_CamTessSphere->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_CamTessSphere->SetCameraPositionConstantBuffer(cam);
+	m_CamTessSphere->Render();
+	m_pottery->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_pottery->SetCameraPositionConstantBuffer(cam);
+	m_pottery->Render();
+	for (auto& floa : m_float)
+	{
+		floa->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+		floa->SetCameraPositionConstantBuffer(cam);
+		floa->Render();
+	}
+	m_terrain->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_terrain->SetCameraPositionConstantBuffer(cam);
+	m_terrain->Render();
+//
+
+for (auto& star : m_explode)
+{
+	star->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	star->SetCameraPositionConstantBuffer(cam);
+	star->Render();
+}
+
 
 	 // Loading is asynchronous. Only draw geometry after it's loaded.
+	
+
+
+
+	m_torus->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_torus->SetCameraPositionConstantBuffer(cam);
+	m_torus->Render();
+	//m_frac->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	//m_frac->SetCameraPositionConstantBuffer(cam);
+	//m_frac->Render();
+		m_ImplicitRay->SetViewProjectionMatrixConstantBuffer(XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.view)), XMMatrixTranspose(XMLoadFloat4x4(&m_constantBufferData.projection)));
+	m_ImplicitRay->SetCameraPositionConstantBuffer(cam);
+	m_ImplicitRay->Render();
 
 }
 
@@ -280,6 +378,16 @@ void Sample3DSceneRenderer::ReleaseDeviceDependentResources()
 	m_TessSphere->ReleaseDeviceDependentResources();
 	m_CamTessSphere->ReleaseDeviceDependentResources();
 	m_terrain->ReleaseDeviceDependentResources();
-	m_float->ReleaseDeviceDependentResources();
-	//m_dog->ReleaseDeviceDependentResources();
+	for (auto& floa : m_float)
+	{
+		floa->ReleaseDeviceDependentResources();
+	}
+	for (auto& star : m_explode)
+	{
+		star->ReleaseDeviceDependentResources();
+	}
+	m_blackHole->ReleaseDeviceDependentResources();
+	m_frac->ReleaseDeviceDependentResources();
+	m_sun->ReleaseDeviceDependentResources();
+	m_stars->ReleaseDeviceDependentResources();
 }

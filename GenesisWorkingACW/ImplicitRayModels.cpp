@@ -1,9 +1,10 @@
 #include "pch.h"
 #include "ImplicitRayModels.h"
 #include <Common/DirectXHelper.h>
+using namespace D2D1;
 using namespace GenesisWorkingACW;
 using namespace DirectX;
-ImplicitRay::ImplicitRay(const std::shared_ptr<DX::DeviceResources>& deviceResources) :m_deviceResources(deviceResources), m_position(0.f, 0.f, 5.5f), m_rotation(0.0f, 0.0f, 0.0f), m_scale(1.f, 1.f, 1.f)
+ImplicitRay::ImplicitRay(const std::shared_ptr<DX::DeviceResources>& deviceResources) :m_deviceResources(deviceResources), m_position(0.f, 0.f, 10.5f), m_rotation(0.0f, 0.0f, 0.0f), m_scale(20.f, 20.f,20.f)
 {
 	CreateDeviceDependentResources();
 }
@@ -77,7 +78,7 @@ void ImplicitRay::Render()
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	context->IASetInputLayout(m_inputLayout.Get());
-
+	
 	// Attach our vertex shader.
 	context->VSSetShader(
 		m_vertexShader.Get(),
@@ -150,16 +151,21 @@ void ImplicitRay::Render()
 		0, 0
 	);
 
+
+
 }
 void ImplicitRay::SetCameraPositionConstantBuffer(DirectX::XMFLOAT3& cameraPosition)
 {
 	m_camBufferData.position = cameraPosition;
 	m_camBufferData.padding = 1;
 }
+
 void ImplicitRay::CreateDeviceDependentResources()
 {
+
 	auto loadVSTask = DX::ReadDataAsync(L"ImplicitVS.cso");
 	auto loadPSTask = DX::ReadDataAsync(L"RayMarchObjPS.cso");
+
 	auto createVSTask = loadVSTask.then([this](const std::vector<byte>& fileData) {
 		DX::ThrowIfFailed(
 			m_deviceResources->GetD3DDevice()->CreateVertexShader(
@@ -238,10 +244,10 @@ void ImplicitRay::CreateDeviceDependentResources()
 		// Load mesh vertices. Each vertex has a position and a color.
 		static const VertexPosition cubeVertices[] =
 		{
-			{DirectX::XMFLOAT3(-0.5f, -0.5f, 0.0f)},
-			{DirectX::XMFLOAT3(-0.5f, 0.5f,  0.0f)},
-			{DirectX::XMFLOAT3(0.5f,  -0.5f, 0.0f)},
-			{DirectX::XMFLOAT3(0.5f,  0.5f,  0.0f)},
+			{DirectX::XMFLOAT3(-1.5f, -1.5f, 5.0f)},
+			{DirectX::XMFLOAT3(-1.5f, 1.5f,  5.0f)},
+			{DirectX::XMFLOAT3(1.5f,  -1.5f, 5.0f)},
+			{DirectX::XMFLOAT3(1.5f,  1.5f,  5.0f)},
 		};
 
 		D3D11_SUBRESOURCE_DATA vertexBufferData = { 0 };
@@ -282,7 +288,7 @@ void ImplicitRay::CreateDeviceDependentResources()
 			)
 		);
 		});
-
+	
 	// Once the cube is loaded, the object is ready to be rendered.
 	createCubeTask.then([this]() {
 		m_loadingComplete = true;
@@ -315,6 +321,10 @@ void ImplicitRay::Update(DX::StepTimer const& timer)
 {
 	auto worldMatrix = DirectX::XMMatrixIdentity();
 
+	/*m_rotation.x += timer.GetTotalSeconds();
+	m_rotation.y += timer.GetTotalSeconds();*/
+
+	//m_position.y += sin(timer.GetTotalSeconds());
 	worldMatrix = XMMatrixMultiply(worldMatrix, DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z));
 	worldMatrix = XMMatrixMultiply(worldMatrix, DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationRollPitchYaw(m_rotation.x, m_rotation.y, m_rotation.z)));
 

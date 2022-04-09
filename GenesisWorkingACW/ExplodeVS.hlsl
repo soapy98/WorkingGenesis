@@ -25,27 +25,20 @@ struct VertexShaderInput
 struct PixelShaderInput
 {
     float4 pos : SV_POSITION;
-    float4 color : COLOR0;
 };
 
 // Simple shader to do vertex processing on the GPU.
 PixelShaderInput main(VertexShaderInput input)
 {
     PixelShaderInput output;
+    
     float3 modelPosition = mul(float4(input.pos.xyz, 1.0f), model).xyz;
     float dist = distance(modelPosition, cameraPosition);
-    output.pos = float4(input.pos.xyz, 1);
-    
-	// Transform the vertex position into projected space.
+    float4 pos = float4(input.pos, 1);
     //pos = mul(pos, model);
     //pos = mul(pos, view);
     //pos = mul(pos, projection);
-    //output.pos = pos;
-
-
+    output.pos = pos;
     
-	// Pass the color through without modification.
-    output.color = float4(1, 1, 1, 1);
-
     return output;
 }

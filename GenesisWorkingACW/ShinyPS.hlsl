@@ -78,7 +78,7 @@ struct ShinyObj
     float4 color;
     float Kd, Ks, Kr, shininess;
 };
-static ShinyObj objects[NOBJECTS] =
+static ShinyObj objects[3] =
 {
 //sphere 1
     { sphereColor_1, 0.3, 0.5, 0.7, shininess },
@@ -87,7 +87,7 @@ static ShinyObj objects[NOBJECTS] =
 //sphe
     { sphereColor_3, 0.5, 0.3, 0.3, shininess },
     //
-    { sphereColor_3, 0.5, 0.3, 0.3, shininess }
+    //{ sphereColor_3, 0.5, 0.3, 0.3, shininess }
 };
 float noise(float3 pos)
 {
@@ -138,7 +138,7 @@ float3 get_normal(const int face_hit)
         case 5:
             return (float3(0, 0, 1)); // +z face
     }
-    return float3(0, 0, 0);
+    return float3(1, 0, 0);
 
 }
 float Cubehit(Ray ray, Cube cube, out bool hit, out float3 normal)
@@ -230,7 +230,6 @@ float Cubehit(Ray ray, Cube cube, out bool hit, out float3 normal)
             t = t1;
             normal = get_normal(face_out);
         }
-        //local_hit_point = ray.o + t*ray.d;
         hit = true;
         return t;
     }
@@ -279,15 +278,15 @@ bool AnyHit(Ray ray, out float3 n)
             anyhit = true;
         }
     }
-    for (int j = 0; j < cubAmount; j++)
-    {
-        bool hit;
-        float t = Cubehit(ray, cube[j], hit, n);
-        if (hit)
-        {
-            anyhit = true;
-        }
-    }
+    //for (int j = 0; j < cubAmount; j++)
+    //{
+    //    bool hit;
+    //    float t = Cubehit(ray, cube[j], hit, n);
+    //    if (hit)
+    //    {
+    //        anyhit = true;
+    //    }
+    //}
     return anyhit;
 }
 
@@ -314,22 +313,23 @@ float3 NearestHit(Ray ray, out int hitobj, out bool anyhit, out float3 norm)
             }
         }
     }
-    for (int j = 0; j < 1; j++)
-    {
-        bool hit = false;
-        float3 cn;
-        float t = Cubehit(ray, cube[j], hit, cn);
-        if (hit)
-        {
-            if (t < mint)
-            {
-                hitobj = j + CubeOffset;
-                mint = t;
-                anyhit = true;
-                norm = cn;
-            }
-        }
-    }
+    norm = float3(1, 0, 0);
+    //for (int j = 0; j < 1; j++)
+    //{
+    //    bool hit = false;
+    //    float3 cn;
+    //    float t = Cubehit(ray, cube[j], hit, cn);
+    //    if (hit)
+    //    {
+    //        if (t < mint)
+    //        {
+    //            hitobj = j + CubeOffset;
+    //            mint = t;
+    //            anyhit = true;
+    //            norm = cn;
+    //        }
+    //    }
+    //}
     
     return ray.o + ray.d * mint;
 }
@@ -375,7 +375,7 @@ float4 RayTracing(Ray ray)
     {
         if (hit)
         {
-            if (hitobj < 3)
+            //if (hitobj < 3)
                 n = SphereNormal(sphere[hitobj], localHit);
             c += Shade(localHit, n, ray.d, hitobj, lightInensity, ray);
 // shoot refleced ray
@@ -395,15 +395,12 @@ struct outputPS
     float4 colour : SV_TARGET;
     float depth : SV_DEPTH;
 };
-
 // A pass-through function for the (interpolated) color data.
-outputPS main(VS_QUAD input) : SV_Target
+outputPS main(VS_QUAD input)
 {
-
     outputPS output;
 
-    float3 PixelPos = float3(input.canvasXY, -5);
-
+    float3 PixelPos = float3(input.canvasXY, -MIN_DIST);
 
     Ray eyeray;
     eyeray.o = mul(float4(float3(0.0f, 0.0f, 0.0f), 1.0f), inverse);
@@ -414,6 +411,8 @@ outputPS main(VS_QUAD input) : SV_Target
     if (distanceAndColour.x > MAX_DIST - EPSILON)
     {
         discard;
+		//output.colour = float4(0.0f, 0.0f, 0.0f, 0.0f);
+		//return float4(0.0f, 0.0f, 0.0f, 0.0f);
     }
 
     float3 surfacePoint = CamPos + distanceAndColour.x * eyeray.d;
@@ -427,10 +426,7 @@ outputPS main(VS_QUAD input) : SV_Target
     output.colour = float4(lerp(output.colour.xyz, float3(1.0f, 0.97255f, 0.86275f), 1.0 - exp(-0.0005 * distanceAndColour.x * distanceAndColour.x * distanceAndColour.x)), 1.0f);
 
     return output;
-    
 }
-
-
 //float4 main(VS_QUAD input) : SV_Target
 //{
 //// specify primary ray:

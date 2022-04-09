@@ -4,8 +4,6 @@ using namespace GenesisWorkingACW;
 using namespace DirectX;
 
 
-
-
 Dragon::Dragon(const std::shared_ptr<DX::DeviceResources>& deviceResources)
 	: m_deviceResources(deviceResources), m_position(0.f, 0.f, 3.f), m_rotation(0.0f, 0.0f, 0.0f), m_scale(1.4f, 1.4f, 1.4f), m_loadingComplete(false), m_indexCount(0)
 {
@@ -18,6 +16,7 @@ void Dragon::CreateDeviceDependentResources()
 	auto loadHSTask = DX::ReadDataAsync(L"DragonHS.cso");
 	auto loadDSTask = DX::ReadDataAsync(L"DragonDS.cso");
 	auto loadPSTask = DX::ReadDataAsync(L"DragonPS.cso");
+	auto loadGSTask = DX::ReadDataAsync(L"DragonGS.cso");
 
 	auto createVSTask = loadVSTask.then([this](const std::vector<byte>& fileData) {
 		DX::ThrowIfFailed(
@@ -55,6 +54,10 @@ void Dragon::CreateDeviceDependentResources()
 		{
 			DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateDomainShader(&fileData[0], fileData.size(), nullptr, &m_domainShader));
 		});
+	auto createGSTask = loadGSTask.then([this](const std::vector<byte>& fileData)
+		{
+			DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateGeometryShader(&fileData[0], fileData.size(), nullptr, &m_geoShader));
+		});
 
 	auto createPSTask = loadPSTask.then([this](const std::vector<byte>& fileData) {
 		DX::ThrowIfFailed(
@@ -90,24 +93,26 @@ void Dragon::CreateDeviceDependentResources()
 		CD3D11_BUFFER_DESC cameraBufferDescription(sizeof(CameraConstantBuffer), D3D11_BIND_CONSTANT_BUFFER);
 
 		DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateBuffer(&cameraBufferDescription, nullptr, &m_CamBuffer));
+		CD3D11_BUFFER_DESC timeBD(sizeof(TotalTimeConstantBuffer), D3D11_BIND_CONSTANT_BUFFER);
+
+		DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateBuffer(&timeBD, nullptr, &m_timebuffer));
 
 		});
 
-	auto createPlaneTask = (createPSTask && createDSTask && createHSTask && createVSTask).then([this]() {
+	auto createPlaneTask = (createPSTask && createDSTask && createHSTask && createVSTask&&createGSTask).then([this]() {
 		// Load mesh vertices. Each vertex has a position and a color.
-		static const VertexPosition cubeVertices[] =
+		static  VertexPosition cubeVertices[600] = {};
+		XMFLOAT3 cent = { 0,0,-5 };
+		int count = 0;
+		for (int i = 0; count < 600; i++)
 		{
+			auto randX = -5 + static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / 5.f));
+			auto randY = 1.5f + static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / (5)));
+			auto randZ = static_cast<float>(std::rand()) / (static_cast<float>(RAND_MAX / 5));
+			cubeVertices[count].position = XMFLOAT3((cent.x + 6 * cos(count) + 5) + randX, randY, (cent.z + 6 * sin(count) + 5) + randZ);
+			count++;
+		}
 
-			{XMFLOAT3(-0.5f, -0.5f, -0.5f)},
-			{XMFLOAT3(-0.5f, -0.5f,  0.5f)},
-			{XMFLOAT3(-0.5f,  0.5f, -0.5f)},
-			{XMFLOAT3(-0.5f,  0.5f,  0.5f)},
-			{XMFLOAT3(0.5f, -0.5f, -0.5f)},
-			{XMFLOAT3(0.5f, -0.5f,  0.5f)},
-			{XMFLOAT3(0.5f,  0.5f, -0.5f)},
-			{XMFLOAT3(0.5f,  0.5f,  0.5f)},
-
-		};
 
 		D3D11_SUBRESOURCE_DATA vertexBufferData = { 0 };
 		vertexBufferData.pSysMem = cubeVertices;
@@ -200,8 +205,9 @@ void Dragon::Update(DX::StepTimer const& timer)
 	auto worldMatrix = DirectX::XMMatrixIdentity();
 
 	//m_rotation.x += -0.2f * timer.GetElapsedSeconds();
-	m_rotation.y += 0.2f * timer.GetElapsedSeconds();
-
+	//m_rotation.y += 0.2f * timer.GetElapsedSeconds();
+	m_timeBufferData.padding = XMFLOAT3(0, 0, 0);
+	m_timeBufferData.time = timer.GetTotalSeconds();
 	worldMatrix = XMMatrixMultiply(worldMatrix, DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z));
 	worldMatrix = XMMatrixMultiply(worldMatrix, DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationRollPitchYaw(m_rotation.x, m_rotation.y, m_rotation.z)));
 	worldMatrix = XMMatrixMultiply(worldMatrix, DirectX::XMMatrixTranslation(m_position.x, m_position.y, m_position.z));
@@ -239,6 +245,15 @@ void Dragon::Render()
 		0,
 		0
 	);
+	context->UpdateSubresource1(
+		m_timebuffer.Get(),
+		0,
+		NULL,
+		&m_timeBufferData,
+		0,
+		0,
+		0
+	);
 
 
 
@@ -254,11 +269,11 @@ void Dragon::Render()
 	);
 
 	//context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
-	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_6_CONTROL_POINT_PATCHLIST);
+	//context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST);
 	//context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
+	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_POINTLIST);
 	context->IASetInputLayout(m_inputLayout.Get());
-	//context->RSSetState(m_rast.Get());
+	context->RSSetState(m_rast.Get());
 	// Attach our vertex shader.
 	context->VSSetShader(
 		m_vertexShader.Get(),
@@ -266,48 +281,53 @@ void Dragon::Render()
 		0
 	);
 
-	// Send the constant buffer to the graphics device.
-	context->VSSetConstantBuffers1(
-		0,
-		1,
-		m_MVPBuffer.GetAddressOf(),
-		nullptr,
-		nullptr
-	);
 
+	//context->HSSetShader(
+	//	m_hullShader.Get(),
+	//	nullptr,
+	//	0
+	//);
 
+	//context->DSSetShader(
+	//	m_domainShader.Get(),
+	//	nullptr,
+	//	0
+	//);
 
-	context->HSSetShader(
-		m_hullShader.Get(),
-		nullptr,
-		0
-	);
-
-	context->DSSetShader(
-		m_domainShader.Get(),
-		nullptr,
-		0
-	);
-
-	context->DSSetConstantBuffers1(
-		0,
-		1,
-		m_MVPBuffer.GetAddressOf(),
-		nullptr,
-		nullptr
-	);
-	context->DSSetConstantBuffers1(
-		1,
-		1,
-		m_CamBuffer.GetAddressOf(),
-		nullptr,
-		nullptr
-	);
+	//context->DSSetConstantBuffers1(
+	//	0,
+	//	1,
+	//	m_MVPBuffer.GetAddressOf(),
+	//	nullptr,
+	//	nullptr
+	//);
+	//context->DSSetConstantBuffers1(
+	//	1,
+	//	1,
+	//	m_CamBuffer.GetAddressOf(),
+	//	nullptr,
+	//	nullptr
+	//);
 
 	context->GSSetShader(
-		nullptr,
+		m_geoShader.Get(),
 		nullptr,
 		0
+	);
+	context->GSSetConstantBuffers(
+		0,
+		1,
+		m_MVPBuffer.GetAddressOf()
+	);
+	context->GSSetConstantBuffers(
+		1,
+		1,
+		m_CamBuffer.GetAddressOf()
+	);
+	context->GSSetConstantBuffers(
+		2,
+		1,
+		m_timebuffer.GetAddressOf()
 	);
 
 	// Attach our pixel shader.

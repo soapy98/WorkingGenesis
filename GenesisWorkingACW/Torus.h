@@ -40,7 +40,9 @@ namespace GenesisWorkingACW {
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_CamBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer> m_timeBuffer;
 		TotalTimeConstantBuffer m_timeBufferData;
-
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>m_potteryTexture;
+		Microsoft::WRL::ComPtr<ID3D11SamplerState>m_sampler;
+		ID3D11ShaderResourceView* shader;
 		ModelViewProjectionConstantBuffer			m_MVPBufferData;
 		CameraConstantBuffer m_CamBufferData;
 		uint32										m_indexCount;

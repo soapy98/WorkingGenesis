@@ -36,11 +36,14 @@ namespace GenesisWorkingACW {
 		Microsoft::WRL::ComPtr<ID3D11HullShader>	m_hullShader;
 		Microsoft::WRL::ComPtr<ID3D11DomainShader>	m_domainShader;
 		Microsoft::WRL::ComPtr<ID3D11PixelShader>	m_pixelShader;
+		Microsoft::WRL::ComPtr<ID3D11GeometryShader>	m_geoShader;
 
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_MVPBuffer;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_CamBuffer;
 		Microsoft::WRL::ComPtr<ID3D11RasterizerState> m_rast;
 
+		TotalTimeConstantBuffer m_timeBufferData;
+		Microsoft::WRL::ComPtr<ID3D11Buffer>m_timebuffer;
 		ModelViewProjectionConstantBuffer			m_MVPBufferData;
 		CameraConstantBuffer m_CamBufferData;
 		uint32										m_indexCount;

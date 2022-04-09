@@ -49,7 +49,7 @@ void main(point GeometryShaderInput input[1], inout TriangleStream<PixelShaderIn
     float3 initQuadVert = quadsize * m_quad[1];
     float4 particlePos = float4(initQuadVert, 1.0);
     output.uv = (sign(particlePos.xy) + 1.0) / 2.0;
-        particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
+    particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
     
     particlePos.xyz += pos.xyz;
 
@@ -61,7 +61,7 @@ void main(point GeometryShaderInput input[1], inout TriangleStream<PixelShaderIn
     initQuadVert = quadsize * m_quad[0];
     particlePos = float4(initQuadVert, 1.0);
     output.uv = (sign(particlePos.xy) + 1.0) / 2.0;
-       particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
+    particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
  
     particlePos.xyz += pos.xyz;
 
@@ -74,7 +74,7 @@ void main(point GeometryShaderInput input[1], inout TriangleStream<PixelShaderIn
     particlePos = float4(initQuadVert, 1.0);
     
     output.uv = (sign(particlePos.xy) + 1.0) / 2.0;
-   particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
+    particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
     particlePos.xyz += pos.xyz;
  
     particlePos = mul(particlePos, view);
@@ -101,7 +101,7 @@ void main(point GeometryShaderInput input[1], inout TriangleStream<PixelShaderIn
     initQuadVert = quadsize * m_quad[2];
     particlePos = float4(initQuadVert, 1.0);
     output.uv = (sign(particlePos.xy) + 1.0) / 2.0;
- particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
+    particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
     particlePos.xyz += pos.xyz;
        
     particlePos = mul(particlePos, view);
@@ -112,7 +112,7 @@ void main(point GeometryShaderInput input[1], inout TriangleStream<PixelShaderIn
     initQuadVert = quadsize * m_quad[3];
     particlePos = float4(initQuadVert, 1.0);
     output.uv = (sign(particlePos.xy) + 1.0) / 2.0;
-        particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
+    particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
     particlePos.xyz += pos.xyz;
 
     particlePos = mul(particlePos, view);

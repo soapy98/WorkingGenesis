@@ -1,10 +1,6 @@
 struct HullShaderInput
 {
     float3 position : POSITION;
-    float2 tex : TEXCOORD0;
-    float3 normal : NORMAL;
-    float3 tangent : TANGENT;
-    float3 binormal : BINORMAL;
 };
 
 struct PatchConstantOutput
@@ -16,10 +12,6 @@ struct PatchConstantOutput
 struct DomainShaderInput
 {
     float3 position : POSITION;
-    float2 tex : TEXCOORD0;
-    float3 normal : NORMAL;
-    float3 tangent : TANGENT;
-    float3 binormal : BINORMAL;
 };
 
 PatchConstantOutput PatchConstantFunction(InputPatch<HullShaderInput, 4> inputPatch, uint patchId : SV_PrimitiveID)
@@ -44,9 +36,5 @@ DomainShaderInput main(InputPatch<HullShaderInput, 4> inputPatch, uint outputCon
 {
     DomainShaderInput output;
     output.position = inputPatch[outputControlPointID].position;
-    output.tex = inputPatch[outputControlPointID].tex;
-    output.normal = inputPatch[outputControlPointID].normal;
-    output.tangent = inputPatch[outputControlPointID].tangent;
-    output.binormal = inputPatch[outputControlPointID].binormal;
     return output;
 }

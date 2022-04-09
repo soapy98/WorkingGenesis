@@ -42,5 +42,9 @@ namespace GenesisWorkingACW {
 		uint32										m_indexCount;
 		bool										m_loadingComplete;
 
+		Microsoft::WRL::ComPtr<ID3D11Buffer> m_timeBuffer;
+		TotalTimeConstantBuffer m_timeData;
+
+
 	};
 }

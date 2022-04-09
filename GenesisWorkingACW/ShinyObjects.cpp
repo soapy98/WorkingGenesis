@@ -138,7 +138,7 @@ void ShinyObjs::Render()
 void ShinyObjs::CreateDeviceDependentResources()
 {
 	auto loadVSTask = DX::ReadDataAsync(L"ImplicitVS.cso");
-	auto loadPSTask = DX::ReadDataAsync(L"ShinyPS.cso");
+	auto loadPSTask = DX::ReadDataAsync(L"ShinysPS.cso");
 	auto createVSTask = loadVSTask.then([this](const std::vector<byte>& fileData) {
 		DX::ThrowIfFailed(
 			m_deviceResources->GetD3DDevice()->CreateVertexShader(

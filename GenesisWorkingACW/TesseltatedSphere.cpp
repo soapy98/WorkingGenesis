@@ -1,24 +1,27 @@
 #include "pch.h"
 #include "TesseltatedSphere.h"
+#include <Content/DDSTextureLoader.h>
 using namespace GenesisWorkingACW;
 using namespace DirectX;
 
 
 
 
-TesseltatedSphere::TesseltatedSphere(const std::shared_ptr<DX::DeviceResources>& deviceResources)
-	: m_deviceResources(deviceResources), m_position(0.f, 0.f, 3.f), m_rotation(0.0f, 0.0f, 0.0f), m_scale(1.4f, 1.4f, 1.4f), m_loadingComplete(false), m_indexCount(0)
+TesseltatedSphere::TesseltatedSphere(const std::shared_ptr<DX::DeviceResources>& deviceResources,bool setFace)
+	: m_deviceResources(deviceResources), m_position(0.f, 0.f, 3.f), m_rotation(0.0f, 0.0f, 0.0f), m_scale(1.4f, 1.4f, 1.4f), m_loadingComplete(false), m_indexCount(0),face(setFace)
 {
 	CreateDeviceDependentResources();
 }
 
 void TesseltatedSphere::CreateDeviceDependentResources()
 {
+	std::wstring name;
+	if (face)name = L"Face.cso"; else name = L"TessPS.cso";
 	auto loadVSTask = DX::ReadDataAsync(L"TessVS.cso");
 	auto loadHSTask = DX::ReadDataAsync(L"TessHS.cso");
 	auto loadHS2Task = DX::ReadDataAsync(L"CamTessSphere.cso");
 	auto loadDSTask = DX::ReadDataAsync(L"TessDS.cso");
-	auto loadPSTask = DX::ReadDataAsync(L"TessPS.cso");
+	auto loadPSTask = DX::ReadDataAsync(name);
 
 	auto createVSTask = loadVSTask.then([this](const std::vector<byte>& fileData) {
 		DX::ThrowIfFailed(
@@ -72,21 +75,7 @@ void TesseltatedSphere::CreateDeviceDependentResources()
 			)
 		);
 
-		D3D11_SAMPLER_DESC samplerWrapDescription;
-
-		samplerWrapDescription.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-		samplerWrapDescription.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerWrapDescription.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerWrapDescription.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-		samplerWrapDescription.MipLODBias = 0.0f;
-		samplerWrapDescription.MaxAnisotropy = 1;
-		samplerWrapDescription.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-		samplerWrapDescription.BorderColor[0] = 0.0f;
-		samplerWrapDescription.BorderColor[1] = 0.0f;
-		samplerWrapDescription.BorderColor[2] = 0.0f;
-		samplerWrapDescription.BorderColor[3] = 0.0f;
-		samplerWrapDescription.MinLOD = 0.0f;
-		samplerWrapDescription.MaxLOD = D3D11_FLOAT32_MAX;
+		
 
 
 		CD3D11_BUFFER_DESC MVPBufferDescription(sizeof(ModelViewProjectionConstantBuffer), D3D11_BIND_CONSTANT_BUFFER);
@@ -175,10 +164,17 @@ void TesseltatedSphere::CreateDeviceDependentResources()
 		DX::ThrowIfFailed(
 			m_deviceResources->GetD3DDevice()->CreateRasterizerState(
 				&rasterStateDesc,
-				m_rast.GetAddressOf()
+				m_wireFrame.GetAddressOf()
 			)
 		);
+		rasterStateDesc.FillMode = D3D11_FILL_SOLID;
 
+		DX::ThrowIfFailed(
+			m_deviceResources->GetD3DDevice()->CreateRasterizerState(
+				&rasterStateDesc,
+				m_solid.GetAddressOf()
+			)
+		);
 		});
 
 	createPlaneTask.then([this]() {
@@ -186,21 +182,33 @@ void TesseltatedSphere::CreateDeviceDependentResources()
 		});
 	D3D11_SAMPLER_DESC samplerWrapDescription;
 
+	ZeroMemory(&samplerWrapDescription, sizeof(samplerWrapDescription));
 	samplerWrapDescription.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	samplerWrapDescription.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerWrapDescription.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerWrapDescription.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerWrapDescription.MipLODBias = 0.0f;
-	samplerWrapDescription.MaxAnisotropy = 1;
 	samplerWrapDescription.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-	samplerWrapDescription.BorderColor[0] = 0.0f;
-	samplerWrapDescription.BorderColor[1] = 0.0f;
-	samplerWrapDescription.BorderColor[2] = 0.0f;
-	samplerWrapDescription.BorderColor[3] = 0.0f;
-	samplerWrapDescription.MinLOD = 0.0f;
+	samplerWrapDescription.MaxAnisotropy = 0;
+	samplerWrapDescription.MinLOD = 0;
 	samplerWrapDescription.MaxLOD = D3D11_FLOAT32_MAX;
 
-	m_deviceResources->GetD3DDevice()->CreateSamplerState(&samplerWrapDescription, &m_samp);
+	m_deviceResources->GetD3DDevice()->CreateSamplerState(&samplerWrapDescription, &m_sampWrap);
+	ZeroMemory(&samplerWrapDescription, sizeof(samplerWrapDescription));
+	samplerWrapDescription.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerWrapDescription.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samplerWrapDescription.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samplerWrapDescription.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+	samplerWrapDescription.BorderColor[0] = 1.0f;
+	samplerWrapDescription.BorderColor[1] = 1.0f;
+	samplerWrapDescription.BorderColor[2] = 1.0f;
+	samplerWrapDescription.BorderColor[3] = 1.0f;
+	samplerWrapDescription.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	samplerWrapDescription.MinLOD = 0;
+	samplerWrapDescription.MaxLOD = D3D11_FLOAT32_MAX;
+	m_deviceResources->GetD3DDevice()->CreateSamplerState(&samplerWrapDescription, &m_sampClamp);
+	
+	DX::ThrowIfFailed(CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"Assets\\POt.dds", nullptr, &m_potteryTexture));
+
 	CD3D11_BUFFER_DESC timeconstantBufferDesc(sizeof(TotalTimeConstantBuffer), D3D11_BIND_CONSTANT_BUFFER);
 	DX::ThrowIfFailed(
 		m_deviceResources->GetD3DDevice()->CreateBuffer(
@@ -295,12 +303,9 @@ void TesseltatedSphere::Render()
 		&offset
 	);
 
-	//context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST);
-	//context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
 	context->IASetInputLayout(m_inputLayout.Get());
-	context->RSSetState(m_rast.Get());
+	if (solid)	context->RSSetState(m_solid.Get()); else context->RSSetState(m_wireFrame.Get());
 	// Attach our vertex shader.
 
 	context->VSSetShader(
@@ -373,7 +378,7 @@ void TesseltatedSphere::Render()
 		nullptr,
 		nullptr
 	);
-	context->DSSetSamplers(0, 1, &m_samp);
+
 
 	context->GSSetShader(
 		nullptr,
@@ -387,8 +392,12 @@ void TesseltatedSphere::Render()
 		nullptr,
 		0
 	);
-	context->PSSetSamplers(0, 1, &m_samp);
+	auto pot = m_potteryTexture.Get();
+	if (face) {
+		context->PSSetShaderResources(0, 1, &pot);
+		context->PSSetSamplers(0, 1, &m_sampWrap);
 
+	}
 
 	// Draw the objects.
 	context->Draw(

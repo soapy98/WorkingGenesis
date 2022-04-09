@@ -21,7 +21,14 @@ cbuffer timeConstantBuffer : register(b3)
     float time;
     float3 padding2;
 }
-
+#define vec3 float3
+#define vec4 float4
+#define mat4  float4x4
+#define fract frac
+#define mix lerp
+#define iTime time
+#define vec2 float2
+#define mat3 float3x3
 // Per-pixel color data passed through the pixel shader.
 struct PixelShaderInput
 {
@@ -31,9 +38,9 @@ struct PixelShaderInput
 
 #define NUMBER_OF_LIGHTS 1
 
-static int MAX_MARCHING_STEPS = 255;
+static int MAX_MARCHING_STEPS = 50;
 static float MIN_DIST = 1.0;
-static float MAX_DIST = 100.0;
+static float MAX_DIST = 50.0;
 static float EPSILON = 0.0001;
 
 struct Light
@@ -48,9 +55,9 @@ struct Light
 static Light lights[NUMBER_OF_LIGHTS] =
 {
 	//LightOne
-    { 0.2, 0.2, 0.2, 1.0, 0.4, 0.4, 0.4, 1.0, 0.4, 0.4, 0.4, 1.0, 0.0, 30.0, 0.0, 50 }
+    { 0.2, 0.2, 0.2, 1.0, 0.4, 0.4, 0.4, 1.0, 0.4, 0.4, 0.4, 1.0, 20.0, 15.0, 20.0, 30 },
 	//LightTwo
-	//{0.2, 0.2, 0.2, 1.0, 0.4, 0.4, 0.4, 1.0, 0.4, 0.4, 0.4, 1.0, 0.0, -5.0, 0.0, 20},
+    //{ 0.2, 0.2, 0.6, 1.0, 0.4, 0.4, 0.4, 1.0, 0.4, 0.4, 0.4, 1.0, -20.0, -15, -20.0, 100 },
 };
 
 
@@ -85,7 +92,41 @@ float dot2(float2 v)
 {
     return dot(v, v);
 }
+mat3 rotateX(float theta) {
+    float c = cos(theta);
+    float s = sin(theta);
+    return mat3(
+        vec3(1, 0, 0),
+        vec3(0, c, -s),
+        vec3(0, s, c)
+    );
+}
 
+/**
+ * Rotation matrix around the Y axis.
+ */
+mat3 rotateY(float theta) {
+    float c = cos(theta);
+    float s = sin(theta);
+    return mat3(
+        vec3(c, 0, s),
+        vec3(0, 1, 0),
+        vec3(-s, 0, c)
+    );
+}
+
+/**
+ * Rotation matrix around the Z axis.
+ */
+mat3 rotateZ(float theta) {
+    float c = cos(theta);
+    float s = sin(theta);
+    return mat3(
+        vec3(c, -s, 0),
+        vec3(s, c, 0),
+        vec3(0, 0, 1)
+    );
+}
 //Sphere Signed Distance Function with a radius of 1 (p = sphere point location)
 float sphereSDF(float3 p, float s)
 {
@@ -448,6 +489,65 @@ float4 SierpinskiTetrahedron(float3 pos)
     return float4((sqrt(dm) - 1.0) / r, saturate(pos));
 }
 
+vec4 NC0 = vec4(0.0, 157.0, 113.0, 270.0);
+vec4 NC1 = vec4(1.0, 158.0, 114.0, 271.0);
+//vec4 WS=vec4(10.25,32.25,15.25,3.25);
+vec4 WS = vec4(0.25, 0.25, 0.25, 0.25);
+vec4 hash4(vec4 n)
+{
+    return fract(sin(n) * 1399763.5453123);
+}
+vec3 hash3(vec3 n)
+{
+    return fract(sin(n) * 1399763.5453123);
+}
+vec3 hpos(vec3 n)
+{
+    return hash3(vec3(dot(n, vec3(157.0, 113.0, 271.0)), dot(n, vec3(271.0, 157.0, 113.0)), dot(n, vec3(113.0, 271.0, 157.0))));
+}
+//vec4 hash4( vec4 n ) { return fract(n*fract(n*0.5453123)); }
+//vec4 hash4( vec4 n ) { n*=1.987654321; return fract(n*fract(n)); }
+float noise4q(vec4 x)
+{
+    vec4 n3 = vec4(0, 0.25, 0.5, 0.75);
+    vec4 p2 = floor(x.wwww + n3);
+    vec4 b = floor(x.xxxx + n3) + floor(x.yyyy + n3) * 157.0 + floor(x.zzzz + n3) * 113.0;
+    vec4 p1 = b + fract(p2 * 0.00390625) * vec4(164352.0, -164352.0, 163840.0, -163840.0);
+    p2 = b + fract((p2 + 1.0) * 0.00390625) * vec4(164352.0, -164352.0, 163840.0, -163840.0);
+    vec4 f1 = fract(x.xxxx + n3);
+    vec4 f2 = fract(x.yyyy + n3);
+    f1 = f1 * f1 * (3.0 - 2.0 * f1);
+    f2 = f2 * f2 * (3.0 - 2.0 * f2);
+    vec4 n1 = vec4(0, 1.0, 157.0, 158.0);
+    vec4 n2 = vec4(113.0, 114.0, 270.0, 271.0);
+    vec4 vs1 = mix(hash4(p1), hash4(n1.yyyy + p1), f1);
+    vec4 vs2 = mix(hash4(n1.zzzz + p1), hash4(n1.wwww + p1), f1);
+    vec4 vs3 = mix(hash4(p2), hash4(n1.yyyy + p2), f1);
+    vec4 vs4 = mix(hash4(n1.zzzz + p2), hash4(n1.wwww + p2), f1);
+    vs1 = mix(vs1, vs2, f2);
+    vs3 = mix(vs3, vs4, f2);
+    vs2 = mix(hash4(n2.xxxx + p1), hash4(n2.yyyy + p1), f1);
+    vs4 = mix(hash4(n2.zzzz + p1), hash4(n2.wwww + p1), f1);
+    vs2 = mix(vs2, vs4, f2);
+    vs4 = mix(hash4(n2.xxxx + p2), hash4(n2.yyyy + p2), f1);
+    vec4 vs5 = mix(hash4(n2.zzzz + p2), hash4(n2.wwww + p2), f1);
+    vs4 = mix(vs4, vs5, f2);
+    f1 = fract(x.zzzz + n3);
+    f2 = fract(x.wwww + n3);
+    f1 = f1 * f1 * (3.0 - 2.0 * f1);
+    f2 = f2 * f2 * (3.0 - 2.0 * f2);
+    vs1 = mix(vs1, vs2, f1);
+    vs3 = mix(vs3, vs4, f1);
+    vs1 = mix(vs1, vs3, f2);
+    float r = dot(vs1, (vec4) 0.25);
+	//r=r*r*(3.0-2.0*r);
+    return r * r * (3.0 - 2.0 * r);
+}
+
+
+
+
+
 float4 EvaluateCubic(float4 base)
 {
     return float4(base.x + base.y, base.y / 3, -base.z / 3, base.z + base.w);
@@ -459,13 +559,9 @@ float4 sceneSDF(float3 samplePoint)
 	//Contains hit distance (x) and colour (yzw)
     float4 closestHit = float4(1e10, 0.0f, 0.0f, 0.0f);
 
-	////Effect 1 / 4 using lerp function to transition between a set of primitives
-	////Sphere to Cube to Torus
-    //float3 infinPos = float3(abs(samplePoint.x), samplePoint.y - 4, abs(samplePoint.z));
-    //infinPos.xz = fmod(infinPos.xz / 2.0f + 0.5f, 1.0f) - 0.5f;
-    //closestHit = smoothSubtraction(torusSDF(samplePoint - float3(0, 0, 1), float2(0.3f, 0.05f)), 0.03, 0.01f);
-    
- //closestHit=   unionSDF(closestHit, float4(lerp(lerp(torusSDF(infinPos, float2(0.3f, 0.1f)), ellipsoidSDF(infinPos, float3(0.4f, 0.4f, 0.4f)), abs(sin(time * 3))), sphereSDF(infinPos, 0.2f), abs(sin(time * 0.7f))), float3(0.4f, 0.8f, 0.8f)));
+    float3 infinPos = float3(abs(samplePoint.x), samplePoint.y-0.51 , abs(samplePoint.z));
+    infinPos.xz = fmod(infinPos.xz / 1.0f + .5f, 1.0f) - 0.5f;
+ closestHit=   unionSDF(closestHit, float4(triPrismSDF(infinPos, float2(0.03f, 0.01f)), float3(0.4f, 0.8f, 0.8f)));
 
 	
 
@@ -476,86 +572,95 @@ float4 sceneSDF(float3 samplePoint)
  //closestHit = unionSDF(closestHit, float4(face, 0.987f, 0.28f, 0.45f));
    
     //closestHit = unionSDF(closestHit, float4(re.r, 01.987f, 0.128f, 0.45f));
-	////WaterDripEffect
-    float3 dripEffectPosition = float3(0.9f, 0.6f, 0.9f);
-    float resultDrip = smoothUnion(roundBoxSDF(samplePoint - float3(dripEffectPosition.x, dripEffectPosition.y - 0.2f, dripEffectPosition.z), float3(0.06f, 0.06f, 0.06f), 0.032), cappedConeSDF(samplePoint - float3(dripEffectPosition.x, dripEffectPosition.y + 0.3f, dripEffectPosition.z), 0.1, 0.06, 0.08), 0.01f);
-    float sphereLerpYOne = lerp(0.1f, 0.9f, abs(cos(time / 2)));
-    float sphereLerpYTwo = lerp(0.0f, 0.6f, abs(sin(time / 4)));
-    float sphereLerpYThree = asin(time * 5);
-    
-    float smo = smoothstep(0.02, 0.2, sin(time));
-    //resultDrip = softMin2(resultDrip, sphereSDF(samplePoint - float3(dripEffectPosition.x - 0.015f, (dripEffectPosition.y - 0.1f) - smo+sphereLerpYTwo, dripEffectPosition.z), 0.06f),0.01);
-    //resultDrip = smoothUnion(resultDrip, sphereSDF(samplePoint - float3(dripEffectPosition.x, (dripEffectPosition.y - 0.3f) - sphereLerpYTwo, dripEffectPosition.z), 0.02f), 0.05f);
-    ////resultDrip = smoothUnion(resultDrip, sphereSDF(samplePoint - float3(dripEffectPosition.x + 0.015f, (dripEffectPosition.y - 0.3f) - sphereLerpYThree, dripEffectPosition.z), 0.02f), 0.02f);
-    ////resultDrip = smoothUnion(resultDrip, sphereSDF(samplePoint - float3(dripEffectPosition.x - 0.015f, (dripEffectPosition.y - 0.3f) + sphereLerpYOne, dripEffectPosition.z), 0.02f), 0.02f);
-    ////resultDrip = smoothUnion(resultDrip, sphereSDF(samplePoint - float3(dripEffectPosition.x, (dripEffectPosition.y - 0.4f) + sphereLerpYTwo, dripEffectPosition.z), 0.02f), 0.05f);
-    ////resultDrip = smoothUnion(resultDrip, sphereSDF(samplePoint - float3(dripEffectPosition.x + 0.015f, (dripEffectPosition.y - 0.3f) + sphereLerpYThree, dripEffectPosition.z), 0.02f), 0.02f);
-    ////closestHit = unionSDF(closestHit, float4(resultDrip, 0.456f, 0.15f, 0.5564));
+
   //Person
     float3 bodyPos = float3(0, 0, 0);
      
     float3 snakePos = float3(0.4, 0.3, 0.6);
     float4 snake = float4(snakePos.x - 0.04, snakePos.y - 0.04, snakePos.z, 0.08);
-    //snake = EvaluateCubic(snake) * sin(time)*2;
-    {
-        float an = sin(time);
-        float3 q = snakePos - float3(0.0, 0.0, -.3);
-        float uni = smoothUnion(sphereSDF(samplePoint - float3(bodyPos.x - 0.06, bodyPos.y + 0.05, bodyPos.z), 0.05), sphereSDF(samplePoint - float3(bodyPos.x - 0.06, bodyPos.y + 0.05, bodyPos.z), 0.05), 0.03);
-        float d2 = roundBoxSDF(q, float3(0.06, 0.02, 0.07), 0.1);
-        float dt = smoothSubtraction(uni, d2, 0.03);
-        uni = smoothUnion(sphereSDF(samplePoint - float3(bodyPos.x + 0.06, bodyPos.y + sin(time * 4) * 0.05, bodyPos.z), 0.05), cylinderSDF(samplePoint - float3(bodyPos.x, bodyPos.y, bodyPos.z), 0.01, 0.015, 0.028), 0.1f);
-        float d = min(dt, uni);
-    //closestHit = unionSDF(closestHit, float4(d, 0.456f, 0.15f, 0.5564));
+    //snake = EvaluateCubic(snake) * sin(time) * 2;
+    //{
+    //    float an = sin(time);
+    //    float3 q = snakePos - float3(0.0, 0.0, -.3);
+    //    float uni = smoothUnion(sphereSDF(samplePoint - float3(bodyPos.x - 0.06, bodyPos.y + 0.05, bodyPos.z), 0.05), sphereSDF(samplePoint - float3(bodyPos.x - 0.06, bodyPos.y + 0.05, bodyPos.z), 0.05), 0.03);
+    //    float d2 = roundBoxSDF(q, float3(0.06, 0.02, 0.07), 0.1);
+    //    float dt = smoothSubtraction(uni, d2, 0.03);
+    //    uni = smoothUnion(sphereSDF(samplePoint - float3(bodyPos.x + 0.06, bodyPos.y + sin(time * 4) * 0.05, bodyPos.z), 0.05), cylinderSDF(samplePoint - float3(bodyPos.x, bodyPos.y, bodyPos.z), 0.01, 0.015, 0.028), 0.1f);
+    //    float d = min(dt, uni);
+    //    closestHit = unionSDF(closestHit, float4(d, 0.456f, 0.15f, 0.5564));
     //    uni = smoothUnion(sphereSDF(samplePoint - float3(bodyPos.x - 0.06, bodyPos.y + sin(time * 4) * 0.05, bodyPos.z), 0.05), cylinderSDF(samplePoint - float3(bodyPos.x, bodyPos.y, bodyPos.z), 0.01, 0.015, 0.028), 0.1f);
     //    closestHit = unionSDF(closestHit, float4(uni, 0.456f, 0.15f, 0.5564));
-    //    uni = smoothUnion(sphereSDF(samplePoint - float3(bodyPos.x - 0.06, bodyPos.y + sin(time * 4) * 0.05, bodyPos.z-0.03), 0.05), cylinderSDF(samplePoint - float3(bodyPos.x, bodyPos.y, bodyPos.z), 0.01, 0.015, 0.028), 0.1f);
+    //    uni = smoothUnion(sphereSDF(samplePoint - float3(bodyPos.x - 0.06, bodyPos.y + sin(time * 4) * 0.05, bodyPos.z - 0.03), 0.05), cylinderSDF(samplePoint - float3(bodyPos.x, bodyPos.y, bodyPos.z), 0.01, 0.015, 0.028), 0.1f);
     //    closestHit = unionSDF(closestHit, float4(uni, 0.456f, 0.15f, 0.5564));
     //    uni = smoothUnion(sphereSDF(samplePoint - float3(bodyPos.x + 0.06, bodyPos.y + frac(sin(time * 4)) * 0.05, bodyPos.z + 0.03), 0.05), cylinderSDF(samplePoint - float3(bodyPos.x, bodyPos.y, bodyPos.z), 0.01, 0.015, 0.028), 0.1f);
     //    closestHit = unionSDF(closestHit, float4(uni, 0.456f, 0.15f, 0.5564));
-    //    uni = smoothUnion(uni, resultDrip, 0.5);
+    //    //uni = smoothUnion(uni, d, 0.5);
     //    closestHit = unionSDF(closestHit, float4(uni, 0.456f, 0.15f, 0.5564));
-        //uni = smoothUnion(uni, sphereSDF(samplePoint - float3(bodyPos.x - 0.06, bodyPos.y + 0.05, bodyPos.z), 0.05), 0.02);
-        //closestHit = unionSDF(closestHit, float4(uni, 0.3f, 0.6f, 0.4));
-    }
+    //    uni = smoothUnion(uni, sphereSDF(samplePoint - float3(bodyPos.x - 0.06, bodyPos.y + 0.05, bodyPos.z), 0.05), 0.02);
+    //    closestHit = unionSDF(closestHit, float4(uni, 0.3f, 0.6f, 0.4));
+    //}
+    //{
+    //    float3 pos = float3(0.0, 0.3, 0);
+    //    float sphere = sphereSDF(samplePoint - float3(pos.x + sin(time * 20) * 0.1, pos.yz), sin(time) * 0.1 + 0.05);
+    //    float s = sphereSDF(samplePoint - float3(pos.x - sin(time * 20) * 0.1, pos.yz), sin(time) * 0.1 + 0.05);
+    //    float merge = smoothUnion(s, sphere, 0.5);
+    //    float a = coneSDF(samplePoint - float3(pos.x + sin(time * 20) * 0.1, pos.yz), float3(0.02, 0.02, 0.02));
+    //    merge = smoothUnion(merge, a, 0.3);
+
+    //    float sub = cylinderSDF(samplePoint - float3(sphere, pos.y, pos.z + sin(time)), float2(0.05, 0.05));
+    //    merge = smoothSubtraction(sub, merge, 0.5);
+    //    sphere = softMin2(sphereSDF(samplePoint - float3(pos.x + sin(time * 20) * 0.1, pos.yz), 0.05), ellipsoidSDF(samplePoint - float3(pos.x + 0.02, pos.y + 0.004, pos.z), float3(0.04, 0.04, 0.04)), 0.08);
+    //    closestHit = unionSDF(closestHit, float4(merge, 0.456f, 0.15f, 0.5564));
+    //    sphere = smoothUnion(sphere, ellipsoidSDF(samplePoint - float3(pos.x + 0.02, pos.y + 0.04, pos.z), float3(0.1, 0.1, 0.1)), 0.07);
+    //    closestHit = unionSDF(closestHit, float4(sphere, 0.456f, 0.15f, 0.5564));
+    //    sphere = softAbs2(sphere, cubeSDF(samplePoint - float3(pos.x + 0.02, pos.y + 0.04, pos.z), float3(0.04, 0.04, 0.04)));
+    //    closestHit = unionSDF(closestHit, float4(sphere, 0.4f, 0.55f, 0.5564));
+    //}
     {
-        float3 pos = float3(0.0, 1, 0);
-        float sphere = smoothUnion(sphereSDF(samplePoint - float3(pos), 0.05), ellipsoidSDF(samplePoint - float3(pos.x + 0.02 * sin(time), pos.y + 0.004, pos.z), float3(0.04, 0.4, 0.04)), 0.04);
+        //float3 pos = float3(0.0, 0.3, 0);
+        //float sphere = sphereSDF(samplePoint - float3(pos.xyz), 0.1);
+        // float sphere2 = sphereSDF(samplePoint - float3(pos.x+0.15,pos.y,pos.z), 0.1);
+        //float merge = smoothUnion(sphere, sphere2, 0.2);
+        //closestHit = unionSDF(closestHit, float4(merge, 0.4f, 0.55f, 0.5564));
+        //float sphere3 = sphereSDF(samplePoint - float3(pos.x, pos.y, pos.z + sin(time)+0.02 ), 0.01);
+        //float m = smoothSubtraction(sphere3, merge, 0.5);
         
-        closestHit = unionSDF(closestHit, float4(sphere, 0.456f, 0.15f, 0.5564));
-        sphere = smoothUnion(sphere, ellipsoidSDF(samplePoint - float3(pos.x + 0.02 * sin(time), pos.y + 0.04, pos.z), float3(0.4, 0.04, 0.04)), 0.04);
-        closestHit = unionSDF(closestHit, float4(sphere, 0.456f, 0.15f, 0.5564));
-        
-        
+        //closestHit = unionSDF(closestHit, float4(m, 0.4f, 0.55f, 0.5564));
+        ////float torus = torusSDF(samplePoint - float3(pos.x + sin(time), pos.y, pos.z), float2(0.1, 0.1));
+        ////closestHit = unionSDF(closestHit, float4(torus, 0.4f, 0.67f, 0.5564));
+        //float cube = cubeSDF(samplePoint - float3(pos.xy, pos.z + sin(time) * 0.2), float3(0.1, 0.1, 0.1));
+        //float sub = smoothUnion(cube, sphere, 0.1);
+         //sub = smoothUnion(sphere2, torus, 0.1);
+        //closestHit = unionSDF(closestHit, float4(merge, 0.4f, 0.55f, 0.5564));
     }
-    {
-        float3 pos = float3(0.0, -0.01, 0);
-        float s = sphereSDF(samplePoint - float3(0, 0, 0), 0.8);
-        float a = cubeSDF(samplePoint - float3(0, 0.03, 0), float3(0.2, 0.2, 2));
-        float sub = smoothSubtraction(a, s, 0.3);
+  
+    //    float3 pos = float3(0.0, -0.01, 0);
+    //    float s = sphereSDF(samplePoint - float3(0, 0, 0), 0.8);
+    //    float a = cubeSDF(samplePoint - float3(0, 0.03, 0), float3(0.2, 0.2, 2));
+    //    float sub = smoothSubtraction(a, s, 0.3);
         
-        closestHit = unionSDF(closestHit, float4(sub, 0.86f, 0.5f, 0.564));
-        float sphere = smoothUnion(sphereSDF(samplePoint - float3(pos), 0.05), sub, sin(time) + 0.05);
-        closestHit = unionSDF(closestHit, float4(sphere, 0.456f, 0.15f, 0.5564));
+    //    closestHit = unionSDF(closestHit, float4(sub, 0.86f, 0.5f, 0.564));
+    //    float sphere = smoothUnion(sphereSDF(samplePoint - float3(pos), 0.05), sub, sin(time) + 0.05);
+    //    closestHit = unionSDF(closestHit, float4(sphere, 0.456f, 0.15f, 0.5564));
         
-    }
-    
-    {
-        float3 pos = float3(-0.4, 0.0, 0.5);
-        pos.x += sin(time);
-        pos.z -= cos(time);
-        float s = sphereSDF(samplePoint - pos, 0.1);
-        float a = coneSDF(samplePoint - float3(pos.x, pos.y + 0.02, pos.z - 0.02), float3(0.06, 0.06, 0.06));
-        float sub = smoothUnion(s, a, 0.2);
-        closestHit = unionSDF(closestHit, float4(sub, 0.456f, 0.15f, 0.5564));
+  
+    //{
+    //    float3 pos = float3(-0.4, 0.0, 0.5);
+    //    pos.x += sin(time);
+    //    pos.z -= cos(time);
+    //    float s = sphereSDF(samplePoint - pos, 0.1);
+    //    float a = coneSDF(samplePoint - float3(pos.x, pos.y + 0.02, pos.z - 0.02), float3(0.06, 0.06, 0.06));
+    //    float sub = smoothUnion(s, a, 0.2);
+    //    closestHit = unionSDF(closestHit, float4(sub, 0.456f, 0.15f, 0.5564));
         
-        float bul = torusSDF(samplePoint - float3(pos.x, sin(time) + pos.y + 0.08, pos.z), float2(0.04, 0.04));
-        bul = smoothUnion(bul, sub, 0.3);
-        closestHit = unionSDF(closestHit, float4(bul, 0.1f, 0.15f, 0.89));
-        bul = torusSDF(samplePoint - float3(pos.x, pos.y - 0.08 * sin(time), sin(time) + pos.z),
-        float2(0.04, 0.04));
-        bul = smoothUnion(bul, sub, 0.3);
-        closestHit = unionSDF(closestHit, float4(bul, 0.1f, 0.16f, 0.89));
-    }
+    //    float bul = torusSDF(samplePoint - float3(pos.x, sin(time) + pos.y + 0.08, pos.z), float2(0.04, 0.04));
+    //    bul = smoothUnion(bul, sub, 0.3);
+    //    closestHit = unionSDF(closestHit, float4(bul, 0.1f, 0.15f, 0.89));
+    //    bul = torusSDF(samplePoint - float3(pos.x, pos.y - 0.08 * sin(time), sin(time) + pos.z),
+    //    float2(0.04, 0.04));
+    //    bul = smoothUnion(bul, sub, 0.3);
+    //    closestHit = unionSDF(closestHit, float4(bul, 0.1f, 0.16f, 0.89));
+    //}
     //float snakeMove = smoothUnion(roundBoxSDF(samplePoint - float3(snakePos.x, snakePos.y, snakePos.z), float3(0.06f, 0.06f, 0.06f), 0.062), roundBoxSDF(samplePoint - float3(snakePos.x, snakePos.y - 0.2f, snakePos.z), float3(0.06f, 0.08f, 0.06f), 0.032),0.03);
     
     ////snakeMove = smoo(snakeMove, coneSDF(samplePoint - float3(snakePos.x - 0.03, snakePos.y + 0.04, snakePos.z + 0.06), float3(0.01f, 0.06f, 0.01f),0.02);
@@ -588,23 +693,47 @@ float4 sceneSDF(float3 samplePoint)
     
     
     
-    //////Ray Marched Implicit Geometric Primitives
-    closestHit = unionSDF(closestHit, float4(roundConeSDF(samplePoint - float3(0.3, 0.5f, 0.3), float3(0.02, 0.0, 0.0), float3(-0.02, 0.06, 0.02), 0.03, 0.01), 0.18f, 0.22f, 1.0f));
-    closestHit = unionSDF(closestHit, float4(coneSDF(samplePoint - float3(0.0, 0.53f, 0.0), float3(0.16, 0.12, 0.06)), 0.55f, 0.23f, 0.38f));
-    closestHit = unionSDF(closestHit, float4(cappedConeSDF(samplePoint - float3(0.3, 0.5f, 0.0f), 0.03, 0.04, 0.02), 0.80f, 0.78f, 0.45f));
-    closestHit = unionSDF(closestHit, float4(0.6 * torusSDF(twistSDF(samplePoint - float3(0.0, 0.5f, 0.3), 60.0f), float2(0.04, 0.01)), 0.28f, 0.51f, 0.08f));
-    closestHit = unionSDF(closestHit, float4(torusSDF(samplePoint - float3(-0.3, 0.5f, -0.3), float2(0.04, 0.01)), 0.41f, 0.27f, 0.54f));
-    closestHit = unionSDF(closestHit, float4(torus82SDF(samplePoint - float3(0.0, 0.5f, -0.3), float2(0.04, 0.01)), 0.52f, 0.75f, 0.42f));
-    closestHit = unionSDF(closestHit, float4(boxSDF(samplePoint - float3(-0.3, 0.5f, 0.0), float3(0.05f, 0.05f, 0.05f)), 0.31f, 0.47f, 0.63f));
-    closestHit = unionSDF(closestHit, float4(roundBoxSDF(samplePoint - float3(-0.3, 0.5f, 0.3), float3(0.04f, 0.04f, 0.04f), 0.016), 1.0f, 0.27f, 0.0f));
-    closestHit = unionSDF(closestHit, float4(ellipsoidSDF(samplePoint - float3(0.3, 0.5f, -0.3), float3(0.05, 0.05, 0.02)), 0.8f, 0.41f, 0.79f));
-    closestHit = unionSDF(closestHit, float4(triPrismSDF(samplePoint - float3(-0.6, 0.5f, -0.3), float2(0.05, 0.02)), 0.92f, 0.68f, 0.92f));
-    closestHit = unionSDF(closestHit, float4(cylinderSDF(samplePoint - float3(-0.6, 0.5f, 0.0), float3(0.002, -0.002, 0.0), float3(-0.02, 0.06, 0.02), 0.016), 0.78f, 0.38f, 0.08f));
-    closestHit = unionSDF(closestHit, float4(cylinderSDF(samplePoint - float3(-0.6, 0.5f, 0.3), float2(0.02, 0.04)), 0.98f, 0.63f, 0.42f));
-    closestHit = unionSDF(closestHit, float4(cylinder6SDF(samplePoint - float3(0.3, 0.5f, 0.6), float2(0.02, 0.04)), 0.29f, 0.46f, 0.43f));
-    closestHit = unionSDF(closestHit, float4(octahedronSDF(samplePoint - float3(0.0, 0.5f, 0.6), 0.07), 0.46f, 0.61f, 0.52f));
-    closestHit = unionSDF(closestHit, float4(hexPrismSDF(samplePoint - float3(-0.3, 0.5f, 0.6), float2(0.05, 0.01)), 0.59f, 1.0f, 1.0f));
-    closestHit = unionSDF(closestHit, float4(roundConeSDF(samplePoint - float3(-0.6, 0.5f, 0.6), 0.04, 0.02, 0.06), 1.0f, 0.2f, 0.0f));
+    ////////Ray Marched Implicit Geometric Primitives
+    //closestHit = unionSDF(closestHit, float4(roundConeSDF(samplePoint - float3(0.3, 0.5f, 0.3), float3(0.02, 0.0, 0.0), float3(-0.02, 0.06, 0.02), 0.03, 0.01), 0.18f, 0.22f, 1.0f));
+    //closestHit = unionSDF(closestHit, float4(coneSDF(samplePoint - float3(0.0, 0.53f, 0.0), float3(0.16, 0.12, 0.06)), 0.55f, 0.23f, 0.38f));
+    //closestHit = unionSDF(closestHit, float4(cappedConeSDF(samplePoint - float3(0.3, 0.5f, 0.0f), 0.03, 0.04, 0.02), 0.80f, 0.78f, 0.45f));
+    //closestHit = unionSDF(closestHit, float4(0.6 * torusSDF(twistSDF(samplePoint - float3(0.0, 0.5f, 0.3), 60.0f), float2(0.04, 0.01)), 0.28f, 0.51f, 0.08f));
+    //closestHit = unionSDF(closestHit, float4(torusSDF(samplePoint - float3(-0.3, 0.5f, -0.3), float2(0.04, 0.01)), 0.41f, 0.27f, 0.54f));
+    //closestHit = unionSDF(closestHit, float4(torus82SDF(samplePoint - float3(0.0, 0.5f, -0.3), float2(0.04, 0.01)), 0.52f, 0.75f, 0.42f));
+    //closestHit = unionSDF(closestHit, float4(boxSDF(samplePoint - float3(-0.3, 0.5f, 0.0), float3(0.05f, 0.05f, 0.05f)), 0.31f, 0.47f, 0.63f));
+    //closestHit = unionSDF(closestHit, float4(roundBoxSDF(samplePoint - float3(-0.3, 0.5f, 0.3), float3(0.04f, 0.04f, 0.04f), 0.016), 1.0f, 0.27f, 0.0f));
+    //closestHit = unionSDF(closestHit, float4(ellipsoidSDF(samplePoint - float3(0.3, 0.5f, -0.3), float3(0.05, 0.05, 0.02)), 0.8f, 0.41f, 0.79f));
+    //closestHit = unionSDF(closestHit, float4(triPrismSDF(samplePoint - float3(-0.6, 0.5f, -0.3), float2(0.05, 0.02)), 0.92f, 0.68f, 0.92f));
+    //closestHit = unionSDF(closestHit, float4(cylinderSDF(samplePoint - float3(-0.6, 0.5f, 0.0), float3(0.002, -0.002, 0.0), float3(-0.02, 0.06, 0.02), 0.016), 0.78f, 0.38f, 0.08f));
+    //closestHit = unionSDF(closestHit, float4(cylinderSDF(samplePoint - float3(-0.6, 0.5f, 0.3), float2(0.02, 0.04)), 0.98f, 0.63f, 0.42f));
+    //closestHit = unionSDF(closestHit, float4(cylinder6SDF(samplePoint - float3(0.3, 0.5f, 0.6), float2(0.02, 0.04)), 0.29f, 0.46f, 0.43f));
+    //closestHit = unionSDF(closestHit, float4(octahedronSDF(samplePoint - float3(0.0, 0.5f, 0.6), 0.07), 0.46f, 0.61f, 0.52f));
+    //closestHit = unionSDF(closestHit, float4(hexPrismSDF(samplePoint - float3(-0.3, 0.5f, 0.6), float2(0.05, 0.01)), 0.59f, 1.0f, 1.0f));
+    //closestHit = unionSDF(closestHit, float4(roundConeSDF(samplePoint - float3(-0.6, 0.5f, 0.6), 0.04, 0.02, 0.06), 1.0f, 0.2f, 0.0f));
+    float3 basicPos = float3(-0.8, 1.1, -2.5);
+    float space = 0.15;
+    ////float3(basicPos.x, basicPos.y, basicPos.z);
+    ////////Ray Marched Implicit Geometric Primitives
+    closestHit = unionSDF(closestHit, float4(roundConeSDF(samplePoint - float3(basicPos.x, basicPos.y, basicPos.z), float3(0.02, 0.0, 0.0), float3(-0.02, 0.06, 0.02), 0.03, 0.01), 0.18f, 0.22f, 1.0f));
+    closestHit = unionSDF(closestHit, float4(coneSDF(samplePoint - float3(basicPos.x - space, basicPos.y, basicPos.z), float3(0.16, 0.12, 0.06)), 0.55f, 0.23f, 0.38f));
+    closestHit = unionSDF(closestHit, float4(cappedConeSDF(samplePoint - float3(basicPos.x - (2 * space), basicPos.y, basicPos.z), 0.03, 0.04, 0.02), 0.80f, 0.78f, 0.45f));
+    closestHit = unionSDF(closestHit, float4(0.6 * torusSDF(cubeSDF(samplePoint - float3(basicPos.x - (3 * space), basicPos.y, basicPos.z), 60.0f), float2(0.04, 0.01)), 0.28f, 0.51f, 0.08f));
+    basicPos.y -= 0.15;
+    closestHit = unionSDF(closestHit, float4(torusSDF(samplePoint - float3(basicPos.x, basicPos.y, basicPos.z), float2(0.04, 0.01)), 0.41f, 0.27f, 0.54f));
+    closestHit = unionSDF(closestHit, float4(torus82SDF(samplePoint - float3(basicPos.x - space, basicPos.y, basicPos.z), float2(0.04, 0.01)), 0.52f, 0.75f, 0.42f));
+    closestHit = unionSDF(closestHit, float4(boxSDF(samplePoint - float3(basicPos.x - (2 * space), basicPos.y, basicPos.z), float3(0.05f, 0.05f, 0.05f)), 0.31f, 0.47f, 0.63f));
+    closestHit = unionSDF(closestHit, float4(roundBoxSDF(samplePoint - float3(basicPos.x - (3 * space), basicPos.y, basicPos.z), float3(0.04f, 0.04f, 0.04f), 0.016), 1.0f, 0.27f, 0.0f));
+    basicPos.y -= 0.15;
+    closestHit = unionSDF(closestHit, float4(ellipsoidSDF(samplePoint - float3(basicPos.x, basicPos.y, basicPos.z), float3(0.05, 0.05, 0.02)), 0.8f, 0.41f, 0.79f));
+    closestHit = unionSDF(closestHit, float4(triPrismSDF(samplePoint - float3(basicPos.x - space, basicPos.y, basicPos.z), float2(0.05, 0.02)), 0.92f, 0.68f, 0.92f));
+    closestHit = unionSDF(closestHit, float4(cylinderSDF(samplePoint - float3(basicPos.x - (2 * space), basicPos.y, basicPos.z), float3(0.002, -0.002, 0.0), float3(-0.02, 0.06, 0.02), 0.016), 0.78f, 0.38f, 0.08f));
+    closestHit = unionSDF(closestHit, float4(cylinderSDF(samplePoint - float3(basicPos.x - (3 * space), basicPos.y, basicPos.z), float2(0.02, 0.04)), 0.98f, 0.63f, 0.42f));
+    basicPos.y -= 0.15;
+    closestHit = unionSDF(closestHit, float4(cylinder6SDF(samplePoint - float3(basicPos.x, basicPos.y, basicPos.z), float2(0.02, 0.04)), 0.29f, 0.46f, 0.43f));
+    closestHit = unionSDF(closestHit, float4(octahedronSDF(samplePoint - float3(basicPos.x - space, basicPos.y, basicPos.z), 0.07), 0.46f, 0.61f, 0.52f));
+    closestHit = unionSDF(closestHit, float4(hexPrismSDF(samplePoint - float3(basicPos.x - (2 * space), basicPos.y, basicPos.z), float2(0.05, 0.01)), 0.59f, 1.0f, 1.0f));
+    closestHit = unionSDF(closestHit, float4(roundConeSDF(samplePoint - float3(basicPos.x - (3 * space), basicPos.y, basicPos.z), 0.04, 0.02, 0.06), 1.0f, 0.2f, 0.0f));
+
 
     return closestHit;
 }

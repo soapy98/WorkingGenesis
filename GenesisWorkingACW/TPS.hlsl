@@ -103,9 +103,9 @@ float intersect(in vec3 ro, in vec3 rd, in float t_max, out bool hit)
 float4 main(VS_QUAD input) : SV_Target
 {
     vec2 uv = input.canvasXY;
-    float3 ro = mul(float4(0, 3, 0, 1), inverse).xyz;
+    float3 ro = mul(float4(0, 0.5, 0, 1), inverse).xyz;
     float3 pos = float3(input.canvasXY, -1);
-    float3 rd = normalize(mul(float4(pos.x,pos.y+2,pos.z, 0), inverse)).xyz;
+    float3 rd = normalize(mul(float4(pos.x,pos.y,pos.z, 0), inverse)).xyz;
    
     //vec3 cam_z = normalize(at - ro);
     //vec3 cam_x = normalize(cross(vec3(0, 1, 0), cam_z));

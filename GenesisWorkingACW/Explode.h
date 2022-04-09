@@ -13,7 +13,9 @@ namespace GenesisWorkingACW {
 		void SetCameraPositionConstantBuffer(DirectX::XMFLOAT3& cameraPosition);
 		void Update(DX::StepTimer const& timer);
 		void Render();
-
+		void SetPos(float x, float y, float z) { m_position = DirectX::XMFLOAT3(x, y, z); }
+		void SetRot(float x, float y, float z) { m_rotation = DirectX::XMFLOAT3(x, y, z); }
+		void SetScale(float x, float y, float z) { m_scale = DirectX::XMFLOAT3(x, y, z); }
 	private:
 		std::shared_ptr<DX::DeviceResources> m_deviceResources;
 
@@ -37,7 +39,9 @@ namespace GenesisWorkingACW {
 		Microsoft::WRL::ComPtr<ID3D11Buffer>		m_cameraBuffer;
 
 		CameraConstantBuffer				m_cameraBufferData;
-
+		Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>m_potteryTexture;
+		Microsoft::WRL::ComPtr<ID3D11SamplerState>m_sampler;
+		ID3D11ShaderResourceView* shader;
 		TotalTimeConstantBuffer m_timeBufferData;
 		Microsoft::WRL::ComPtr<ID3D11Buffer>m_timebuffer;
 

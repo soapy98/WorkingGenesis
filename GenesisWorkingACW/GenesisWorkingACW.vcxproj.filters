@@ -77,20 +77,23 @@
     <Filter Include="Content\RayMarchObjs">
       <UniqueIdentifier>{43fcee9d-547f-4beb-94b2-9fa1babfc0d4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Content\Infinite">
-      <UniqueIdentifier>{e73239d8-de47-4177-9e9f-9323441fb60e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Content\Torus">
       <UniqueIdentifier>{4c7cc341-a222-4326-9a81-d73c009e9aa3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Content\Dragon">
-      <UniqueIdentifier>{844d3b3b-d808-498e-a42a-1fe8979cf89c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Content\FloatingStrip">
       <UniqueIdentifier>{a599b724-d8f5-4ced-80f0-d67cdf82c6a0}</UniqueIdentifier>
     </Filter>
     <Filter Include="Content\Explode">
       <UniqueIdentifier>{294eeddb-1825-4b7a-b82c-678b31b0d534}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Content\RayEffects">
+      <UniqueIdentifier>{9af74fcd-1d0e-4e46-9924-166b9527f1c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Content\BlackHole">
+      <UniqueIdentifier>{2c5aedf1-bea4-4045-b10b-3dc90b259b69}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Content\Sun">
+      <UniqueIdentifier>{83b7a47f-7347-4481-8c7a-b9f3452c7cfb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -124,14 +127,23 @@
     <ClCompile Include="TesseltatedSphere.cpp">
       <Filter>Content\TessSphere</Filter>
     </ClCompile>
-    <ClCompile Include="Dragon.cpp">
-      <Filter>Content\Dragon</Filter>
-    </ClCompile>
     <ClCompile Include="Explode.cpp">
       <Filter>Content\Explode</Filter>
     </ClCompile>
-    <ClCompile Include="Float.cpp">
+    <ClCompile Include="Floating.cpp">
       <Filter>Content\FloatingStrip</Filter>
+    </ClCompile>
+    <ClCompile Include="Content\DDSTextureLoader.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="Effects.cpp">
+      <Filter>Content\RayEffects</Filter>
+    </ClCompile>
+    <ClCompile Include="BlackHole.cpp">
+      <Filter>Content\BlackHole</Filter>
+    </ClCompile>
+    <ClCompile Include="Sun.cpp">
+      <Filter>Content\Sun</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -165,19 +177,43 @@
     <ClInclude Include="TesseltatedSphere.h">
       <Filter>Content\TessSphere</Filter>
     </ClInclude>
-    <ClInclude Include="Dragon.h">
-      <Filter>Content\Dragon</Filter>
-    </ClInclude>
     <ClInclude Include="Explode.h">
       <Filter>Content\Explode</Filter>
     </ClInclude>
-    <ClInclude Include="Float.h">
+    <ClInclude Include="Floating.h">
       <Filter>Content\FloatingStrip</Filter>
+    </ClInclude>
+    <ClInclude Include="Content\DDSTextureLoader.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Effects.h">
+      <Filter>Content\RayEffects</Filter>
+    </ClInclude>
+    <ClInclude Include="BlackHole.h">
+      <Filter>Content\BlackHole</Filter>
+    </ClInclude>
+    <ClInclude Include="Sun.h">
+      <Filter>Content\Sun</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\StoreLogo.png">
       <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\BaseCol.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\Pottery.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\POt.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\faceText.dds">
+      <Filter>Assets</Filter>
+    </Image>
+    <Image Include="Assets\spiral.dds">
+      <Filter>Content\TessSphere</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
@@ -223,9 +259,6 @@
     <FxCompile Include="TousHS.hlsl">
       <Filter>Content\Torus</Filter>
     </FxCompile>
-    <FxCompile Include="RayMarchObjPS.hlsl">
-      <Filter>Content\RayMarchObjs</Filter>
-    </FxCompile>
     <FxCompile Include="ImplicitVS.hlsl">
       <Filter>Content\RayMarchObjs</Filter>
     </FxCompile>
@@ -249,18 +282,6 @@
     </FxCompile>
     <FxCompile Include="TPS.hlsl">
       <Filter>Content\Terrain</Filter>
-    </FxCompile>
-    <FxCompile Include="DragonVS.hlsl">
-      <Filter>Content\Dragon</Filter>
-    </FxCompile>
-    <FxCompile Include="DragonPS.hlsl">
-      <Filter>Content\Dragon</Filter>
-    </FxCompile>
-    <FxCompile Include="DragonHS.hlsl">
-      <Filter>Content\Dragon</Filter>
-    </FxCompile>
-    <FxCompile Include="DragonDS.hlsl">
-      <Filter>Content\Dragon</Filter>
     </FxCompile>
     <FxCompile Include="CamTessSphere.hlsl">
       <Filter>Content\TessSphere</Filter>
@@ -288,6 +309,45 @@
     </FxCompile>
     <FxCompile Include="ExplodeDS.hlsl">
       <Filter>Content\Explode</Filter>
+    </FxCompile>
+    <FxCompile Include="ExplodeVS.hlsl">
+      <Filter>Content\Explode</Filter>
+    </FxCompile>
+    <FxCompile Include="PotteryGS.hlsl">
+      <Filter>Content\Pottery</Filter>
+    </FxCompile>
+    <FxCompile Include="ExtrudeGS.hlsl">
+      <Filter>Content\Explode</Filter>
+    </FxCompile>
+    <FxCompile Include="ShinysPS.hlsl">
+      <Filter>Content\ShinyObjs</Filter>
+    </FxCompile>
+    <FxCompile Include="RayMarchObjPS.hlsl">
+      <Filter>Content\RayMarchObjs</Filter>
+    </FxCompile>
+    <FxCompile Include="fRAC.hlsl">
+      <Filter>Content\RayEffects</Filter>
+    </FxCompile>
+    <FxCompile Include="RenderTexturePS.hlsl">
+      <Filter>Content\RayEffects</Filter>
+    </FxCompile>
+    <FxCompile Include="RenderVS.hlsl">
+      <Filter>Content\RayEffects</Filter>
+    </FxCompile>
+    <FxCompile Include="Face.hlsl">
+      <Filter>Content\TessSphere</Filter>
+    </FxCompile>
+    <FxCompile Include="BlackHole2.0.hlsl">
+      <Filter>Content\BlackHole</Filter>
+    </FxCompile>
+    <FxCompile Include="BlackHole.hlsl">
+      <Filter>Content\BlackHole</Filter>
+    </FxCompile>
+    <FxCompile Include="SunPS.hlsl">
+      <Filter>Content\Sun</Filter>
+    </FxCompile>
+    <FxCompile Include="StarsPS.hlsl">
+      <Filter>Content\RayEffects</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

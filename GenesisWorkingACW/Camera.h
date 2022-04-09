@@ -23,7 +23,7 @@ public:
 	const DirectX::XMVECTOR& GetPosVector() const;
 private:
 	
-	float pitch, yaw;
+	float pitch, yaw,roll;
 	DirectX::XMVECTOR defaultRight = DirectX::XMVectorSet(1, 0, 0, 0);
 	DirectX::XMVECTOR defaultForward = DirectX::XMVectorSet(0, 0, 1, 0);
 	DirectX::XMVECTOR up = DirectX::XMVectorSet(0, 1, 0, 0);

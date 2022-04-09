@@ -8,7 +8,6 @@ struct Light
     float3 lightPosition;
     float specularPower;
 };
-
 static Light lights[NUMBER_OF_LIGHTS] =
 {
 	//LightOne
@@ -23,11 +22,30 @@ struct PixelShaderInput
     float3 positionW : POSITION;
     float3 normal : NORMAL;
     float2 uv : TEXCOORD;
-    //float3 tangent : TANGENT;
-    //float3 binormal : BINORMAL;
+  
     float3 viewDirection : TEXCOORD1;
 };
+float hash(float n)
+{
+    return frac(sin(n) * 43758.5453);
+}
+float rand2(float2 n)
+{
+    return frac(sin(dot(n, float2(12.9898, 4.1414))) * 43758.5453);
+}
+float noise(float3 x)
+{
+    float3 p = floor(x);
+    float3 f = frac(x);
 
+    f = f * f * (3.0 - 2.0 * f);
+    float n = p.x + p.y * 57.0 + 113.0 * p.z;
+
+    return lerp(lerp(lerp(hash(n + 0.0), hash(n + 1.0), f.x),
+		lerp(hash(n + 57.0), hash(n + 58.0), f.x), f.y),
+		lerp(lerp(hash(n + 113.0), hash(n + 114.0), f.x),
+			lerp(hash(n + 170.0), hash(n + 171.0), f.x), f.y), f.z);
+}
 float4 PhongIllumination(float3 pos, float3 normal, float3 viewDir, float3 diffuse)
 {
     float3 totalAmbient = float3(0.0f, 0.0f, 0.0f);
@@ -55,8 +73,9 @@ float4 PhongIllumination(float3 pos, float3 normal, float3 viewDir, float3 diffu
 }
 
 float4 main(PixelShaderInput input) : SV_TARGET
-{
-    float4 colour = PhongIllumination(input.positionW, input.normal, input.viewDirection, float3(0.3735f, 0.6196f, 0.6275f));
+{ 
+    
+    float4 colour = PhongIllumination(input.positionW, input.normal, input.viewDirection, float3(0.1735f, 0.9196f, 0.6275f));
 
     return colour;
 }

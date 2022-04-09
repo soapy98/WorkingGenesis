@@ -373,7 +373,7 @@ void DX::DeviceResources::CreateWindowSizeDependentResources()
 		);
 
 	DX::ThrowIfFailed(
-		m_d3dDevice->CreateRenderTargetView1(
+		m_d3dDevice->CreateRenderTargetView(
 			backBuffer.Get(),
 			nullptr,
 			&m_d3dRenderTargetView

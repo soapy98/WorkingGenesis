@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "AncientPottery.h"
 #include <Common/DirectXHelper.h>
+#include <Content/DDSTextureLoader.h>
 using namespace GenesisWorkingACW;
 using namespace DirectX;
 
@@ -69,6 +70,14 @@ void AncientPottery::CreateDeviceDependentResources()
 				&camconstantBufferDesc,
 				nullptr,
 				&m_cameraBuffer
+			)
+		);
+		CD3D11_BUFFER_DESC TimeConstant(sizeof(TotalTimeConstantBuffer), D3D11_BIND_CONSTANT_BUFFER);
+		DX::ThrowIfFailed(
+			m_deviceResources->GetD3DDevice()->CreateBuffer(
+				&TimeConstant,
+				nullptr,
+				&m_timeBuffer
 			)
 		);
 		});
@@ -495,7 +504,7 @@ void AncientPottery::CreateDeviceDependentResources()
 	CD3D11_RASTERIZER_DESC rasterStateDesc(D3D11_DEFAULT);
 
 	rasterStateDesc.CullMode = D3D11_CULL_NONE;
-	rasterStateDesc.FillMode = D3D11_FILL_WIREFRAME;
+	rasterStateDesc.FillMode = D3D11_FILL_SOLID;
 
 	DX::ThrowIfFailed(
 		m_deviceResources->GetD3DDevice()->CreateRasterizerState(
@@ -503,6 +512,43 @@ void AncientPottery::CreateDeviceDependentResources()
 			m_rasterizerState.GetAddressOf()
 		)
 	);
+	auto size = m_deviceResources->GetOutputSize();
+	D3D11_TEXTURE2D_DESC descDepth = {};
+	descDepth.Width = size.Height;
+	descDepth.Height = size.Width;
+	descDepth.MipLevels = 1;
+	descDepth.ArraySize = 1;
+	descDepth.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	descDepth.SampleDesc.Count = 1;
+	descDepth.SampleDesc.Quality = 0;
+	descDepth.Usage = D3D11_USAGE_DEFAULT;
+	descDepth.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	descDepth.CPUAccessFlags = 0;
+	descDepth.MiscFlags = 0;
+
+	Microsoft::WRL::ComPtr<ID3D11Texture2D>texture;
+	DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateTexture2D(&descDepth,nullptr,&texture));
+
+	D3D11_SHADER_RESOURCE_VIEW_DESC srcDesc{};
+	srcDesc.Format = descDepth.Format;
+	srcDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	srcDesc.Texture2D.MipLevels = descDepth.MipLevels;
+	srcDesc.Texture2D.MostDetailedMip = 0;
+	//DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateShaderResourceView(nullptr, &srcDesc, &m_potteryTexture));
+
+	DX::ThrowIfFailed(CreateDDSTextureFromFile(m_deviceResources->GetD3DDevice(), L"Assets\\POt.dds",nullptr, &m_potteryTexture));
+	shader = m_potteryTexture.Get();
+	D3D11_SAMPLER_DESC sampDesc = {};
+	ZeroMemory(&sampDesc, sizeof(sampDesc));
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+	sampDesc.MaxAnisotropy = 0;
+	sampDesc.MinLOD = 0;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	DX::ThrowIfFailed(m_deviceResources->GetD3DDevice()->CreateSamplerState(&sampDesc, &m_sampler));
 
 	// Once the cube is loaded, the object is ready to be rendered.
 	createCubeTask.then([this]() {
@@ -544,15 +590,15 @@ void AncientPottery::Update(DX::StepTimer const& timer)
 {
 	auto worldMatrix = DirectX::XMMatrixIdentity();
 	////m_rotation.x +=timer.GetElapsedSeconds() * -0.2f;
-	m_rotation.y += timer.GetElapsedSeconds() * 0.2f;
+	//m_rotation.y += timer.GetElapsedSeconds() * 0.2f;
 	worldMatrix = XMMatrixMultiply(worldMatrix, DirectX::XMMatrixScaling(m_scale.x, m_scale.y, m_scale.z));
 	worldMatrix = XMMatrixMultiply(worldMatrix, DirectX::XMMatrixRotationQuaternion(DirectX::XMQuaternionRotationRollPitchYaw(m_rotation.x, m_rotation.y, m_rotation.z)));
 	//worldMatrix = XMMatrixMultiply(worldMatrix, DirectX::XMMatrixRotationY(radians));
 
 	worldMatrix = XMMatrixMultiply(worldMatrix, DirectX::XMMatrixTranslation(m_position.x, m_position.y, m_position.z));
 
-	//m_timeBufferData.time = timer.GetTotalSeconds();
-
+	m_timeBufferData.time = timer.GetTotalSeconds();
+	m_timeBufferData.padding = XMFLOAT3(0, 0, 0);
 	//DirectX::XMStoreFloat4x4(&m_MVPBufferData.model, DirectX::XMMatrixTranspose(DirectX::XMMatrixInverse(nullptr, worldMatrix)));
 	DirectX::XMStoreFloat4x4(&m_MVPBufferData.model, DirectX::XMMatrixTranspose(worldMatrix));
 }
@@ -586,6 +632,15 @@ void AncientPottery::Render()
 		0,
 		0
 	);
+	context->UpdateSubresource1(
+		m_timeBuffer.Get(),
+		0,
+		NULL,
+		&m_timeBufferData,
+		0,
+		0,
+		0
+	);
 
 	// Each vertex is one instance of the VertexPositionColor struct.
 	UINT stride = sizeof(VertexPosition);
@@ -597,7 +652,7 @@ void AncientPottery::Render()
 		&stride,
 		&offset
 	);
-	//context->RSSetState(m_rasterizerState.Get());
+	context->RSSetState(m_rasterizerState.Get());
 	context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
 
 	context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_16_CONTROL_POINT_PATCHLIST);
@@ -637,15 +692,25 @@ void AncientPottery::Render()
 		nullptr,
 		nullptr
 	);
-
+	auto s = m_potteryTexture.Get();
+context->PSSetShaderResources(0, 1, &shader);
+auto sampler = m_sampler.Get();
+context->PSSetSamplers(0, 1, &sampler);
 	// Attach our pixel shader.
 	context->PSSetShader(
 		m_pixelShader.Get(),
 		nullptr,
 		0
 	);
+	context->PSSetConstantBuffers1(
+		0,
+		1,
+		m_timeBuffer.GetAddressOf(),
+		nullptr,
+		nullptr
+	);
+	
 	context->HSSetShader(m_hullShader.Get(), nullptr, 0);
-
 	context->GSSetShader(
 		nullptr,
 		nullptr,

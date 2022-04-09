@@ -19,16 +19,21 @@ struct PatchConstantOutput
 struct DomainShaderInput
 {
     float3 position : BEZIERPOS;
+      //float3 positionW : POSITION;
+    //float3 normal : NORMAL;
+    //float3 tangent : TANGENT;
+    //float3 binormal : BINORMAL;
 };
 
 struct PixelShaderInput
 {
     float4 positionH : SV_POSITION;
-    //float3 positionW : POSITION;
-    //float3 normal : NORMAL;
-    //float3 tangent : TANGENT;
-    //float3 binormal : BINORMAL;
-    float3 viewDirection : TEXCOORD0;
+    float3 positionW : POSITION;
+    float2 tex : TEXCOORD0;
+    float3 normal : NORMAL;
+    float3 tangent : TANGENT;
+    float3 binormal : BINORMAL;
+    float3 viewDirection : TEXCOORD1;
 };
 
 float4 BernsteinBasis(float t)
@@ -64,15 +69,24 @@ PixelShaderInput main(in PatchConstantOutput input, in const float2 uvCoord : SV
 
     float4 basisU = BernsteinBasis(uvCoord.x);
     float4 basisV = BernsteinBasis(uvCoord.y);
-   
-    float3 p = EvaluateBezier(patch, basisU, basisV);
+    float4 dBasisU = dBernsteinBasis(uvCoord.x);
+    float4 dBasisV = dBernsteinBasis(uvCoord.y);
 
-    output.viewDirection = normalize(cameraPos.xyz - p);
-    float4 pos = float4(p, 1);
-    pos = mul(pos, model);
-    pos = mul(pos, view);
-    pos = mul(pos, projection);
+    output.tangent = EvaluateBezier(patch, dBasisU, basisV);
+    output.binormal = EvaluateBezier(patch, basisU, dBasisV);
+    output.normal = normalize(cross(output.tangent, output.binormal));
 
-    output.positionH = pos;
+    output.tangent = normalize(output.tangent);
+    output.binormal = normalize(output.binormal);
+    output.normal = normalize(output.normal);
+
+    output.positionW = EvaluateBezier(patch, basisU, basisV);
+
+    output.viewDirection = normalize(cameraPos.xyz - output.positionW);
+    output.tex = uvCoord;
+    output.positionH = mul(float4(output.positionW, 1.0f), model);
+    output.positionH = mul(output.positionH, view);
+    output.positionH = mul(output.positionH, projection);
+
     return output;
 }

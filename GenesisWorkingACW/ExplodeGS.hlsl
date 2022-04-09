@@ -32,14 +32,12 @@ struct GeometryShaderInput
 struct PixelShaderInput
 {
     float4 positionH : SV_POSITION;
-    float3 positionW : POSITION;
     float3 normal : NORMAL;
     float2 uv : TEXCOORD;
-    float3 viewDirection : TEXCOORD1;
 };
 vec4 explode(vec4 position, vec3 normal)
 {
-    float magnitude = 1;
+    float magnitude = 0.1;
     vec3 direction = normal * ((sin(0.1) + 1.0) / 2.0) * magnitude;
     return position + vec4(direction, 0.0);
 }
@@ -55,7 +53,7 @@ vec3 GetNormal(vec3 inp, vec3 inp1, vec3 inp2)
 
 
 
-[maxvertexcount(10)]
+[maxvertexcount(6)]
 void main(triangle GeometryShaderInput input[3], inout TriangleStream<PixelShaderInput> OutputStream)
 {
     PixelShaderInput output = (PixelShaderInput) 0;
@@ -65,190 +63,38 @@ void main(triangle GeometryShaderInput input[3], inout TriangleStream<PixelShade
    
     //output.pos = mul(input[0].pos, view);
     //output.pos = mul(output.pos, projection);
-    for (uint i = 0; i < 3; i++)
+    float4 cent = (input[0].pos + input[1].pos + input[2].pos)/3;
+      float3 norm =  output.normal=GetNormal(input[0].pos.xyz, input[1].pos.xyz, input[2].pos.xyz);
+    for (uint j = 0; j < 3; j++)
     {
-        float4 pos = input[0].pos;
-        float3 norm = GetNormal(input[0].pos.xyz, input[1].pos.xyz, input[2].pos.xyz);
-        
-        output.normal = mul(norm, (float3x3) model);
-        norm.xyz *= sin(time * 3);
-        vec4 e = explode(input[i].pos, norm);
-        pos = e;
-	// Transform the vertex position into projected space.
-        pos = mul(pos, model);
-        pos = mul(pos, view);
-        pos = mul(pos, projection);
+        float4 pos = input[j].pos;
+        output.normal = norm;
         output.positionH = pos;
-        //output.pos = input[i].pos;
-        output.uv = (sign(input[i].pos.xy) + 1.0) / 2.0;
+        output.uv = (sign(input[j].pos.xy) + 1.0) / 2.0;
         OutputStream.Append(output);
     }
     OutputStream.RestartStrip();
- //   for (uint i = 0; i < 3; i++)
- //   {
-        
- //       float3 norm = GetNormal(input[0].pos.xyz, input[1].pos.xyz, input[2].pos.xyz);
-        
- //       output.Norm = norm;
- //       norm.xyz *= sin(time * 3);
- //       vec4 e = explode(input[i].pos, norm);
- //       float4 pos = e;
- //       pos.x += 3;
-	//// Transform the vertex position into projected space.
- //       pos = mul(pos, model);
- //       pos = mul(pos, view);
- //       pos = mul(pos, projection);
- //       output.pos = pos;
- //       //output.pos = input[i].pos;
- //       output.uv = (sign(input[i].pos.xy) + 1.0) / 2.0;
- //       OutputStream.Append(output);
- //   }
- //   OutputStream.RestartStrip();
-    //initQuadVert = quadsize * m_quad[0];
-    //particlePos = float4(initQuadVert, 1.0);
-    //particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
-    //particlePos.xyz += pos.xyz;
-    //particlePos = mul(particlePos, view);
-    //output.pos = mul(particlePos, projection);
-    //output.color = float4(1, 1, 1, 0);
-    //OutputStream.Append(output);
-
-    //initQuadVert = quadsize * m_quad[3];
-    //particlePos = float4(initQuadVert, 1.0);
-    //particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
-    //particlePos.xyz += pos.xyz;
-    //particlePos = mul(particlePos, view);
-    //output.pos = mul(particlePos, projection);
-    //output.color = float4(1, 1, 1, 0);
-    //OutputStream.Append(output);
-    //OutputStream.RestartStrip();
-
-    //initQuadVert = quadsize * m_quad[0];
-    //particlePos = float4(initQuadVert, 1.0);
-    //particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
-    //particlePos.xyz += pos.xyz;
-    //particlePos = mul(particlePos, view);
-    //output.pos = mul(particlePos, projection);
-    //output.color = float4(0.1, 1, 1, 0);
-    //OutputStream.Append(output);
-    //initQuadVert = quadsize * m_quad[2];
-    //particlePos = float4(initQuadVert, 1.0);
-    //particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
-    //particlePos.xyz += pos.xyz;
-    //particlePos = mul(particlePos, view);
-    //output.pos = mul(particlePos, projection);
-    //output.color = float4(1, 1, 0.5, 0);
-    //OutputStream.Append(output);
-    //initQuadVert = quadsize * m_quad[3];
-    //particlePos = float4(initQuadVert, 1.0);
-    //particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
-    //particlePos.xyz += pos.xyz;
-    //particlePos = mul(particlePos, view);
-    //output.pos = mul(particlePos, projection);
-    //output.color = float4(1, 0.4, 1, 0);
-    //OutputStream.Append(output);
-    //OutputStream.RestartStrip();
-
-
-
- //   for (uint i = 0; i < 3; i++)
- //   {
-        
- //       float3 norm = GetNormal(input[0].pos.xyz, input[1].pos.xyz, input[2].pos.xyz);
- //       vec4 e = explode(input[i].pos, norm);
- //       pos = e;
-	//// Transform the vertex position into projected space.
- //       pos = mul(pos, model);
- //       pos = mul(pos, view);
- //       pos = mul(pos, projection);
- //       output.pos = pos;
- //       //output.pos = input[i].pos;
- //       output.color = float4(1, 1, 1, 1);
- //       output.uv = (sign(input[i].pos.xy) + 1.0) / 2.0;
- //       OutputStream.Append(output);
- //   }
- //   OutputStream.RestartStrip();
- //   float3 leftvec = view._11_21_31;
- //   float3 upvec = view._12_22_32;
- //   for (uint i = 1; i < 4; i++)
- //   {
- //       float quadsize = 0.3;
- //       float3 initQuadVert = quadsize * m_quad[i];
- //       float4 particlePos = float4(initQuadVert, 1.0);
- //       particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
- //       particlePos.xyz += pos.xyz;
- //       particlePos = mul(particlePos, view);
- //       output.pos = mul(particlePos, projection);
- //       output.color = float4(1, 0, 1, 0);
- //       OutputStream.Append(output);
-
- //   }
- //   OutputStream.RestartStrip();
- //   for (uint i = 1; i < 4; i++)
- //   {
- //       float quadsize = 0.3;
- //       float3 initQuadVert = quadsize * gl_positions[i];
- //       float4 particlePos = float4(initQuadVert, 1.0);
- //       particlePos.xyz = initQuadVert.x * leftvec + initQuadVert.y * upvec;
- //       particlePos.xyz += pos.xyz;
- //       particlePos = mul(particlePos, view);
- //       output.pos = mul(particlePos, projection);
- //       //output.CanvasXY = gl_positions[i];
- //       output.color = float4(1, 0, 1, 0);
- //       OutputStream.Append(output);
-
- //   }
- //   OutputStream.RestartStrip();
-    
- //   for (uint i = 0; i < 3; i++)
- //   {
- //       float4 pos = input[i].pos;
- //       /*float3 norm = GetNormal(input[0].pos.xyz, input[1].pos.xyz, input[2].pos.xyz);
- //       vec4 e = explode(input[i].pos, norm);
- //       pos = e;*/
- //       // Transform the vertex position into projected space.
- ///*       pos = mul(pos, model);
- //       pos = mul(pos, view);
- //       pos = mul(pos, projection);*/
- //       output.pos = pos;
- //       //output.pos = input[i].pos;
- //       output.color = input[i].color;
- //       output.uv = (sign(input[i].pos.xy) + 1.0) / 2.0;
- //       OutputStream.Append(output);
- //   }
- //   OutputStream.RestartStrip();
- //   for (uint i = 0; i < 3; i++)
- //   {
- //       float4 pos = input[i].pos;
- //       pos += 0.8;
-	//// Transform the vertex position into projected space.
- //       pos = mul(pos, model);
- //       pos = mul(pos, view);
- //       pos = mul(pos, projection);
- //       output.pos = pos;
- //       //output.pos = input[i].pos;
- //       output.color = input[i].color;
- //       output.uv = (sign(input[i].pos.xy) + 1.0) / 2.0;
- //       OutputStream.Append(output);
- //   }
- //   OutputStream.RestartStrip();
-    
- //   for (uint i = 0; i < 3; i++)
- //   {
-       
- //       float4 pos = input[i].pos;
- //       pos -= 0.7;
-	//// Transform the vertex position into projected space.
- //       pos = mul(pos, model);
- //       pos = mul(pos, view);
- //       pos = mul(pos, projection);
- //       output.pos = pos;
- //       //output.pos = input[i].pos;
- //       output.color = input[i].color;
- //       output.uv = (sign(input[i].pos.xy) + 1.0) / 2.0;
- //       OutputStream.Append(output);
- //   }
- //   OutputStream.RestartStrip();
-    
+    for (uint i = 0; i < 3; i++)
+    {
+        float4 pos = input[i].pos;
+        int next = (i + 1) % 3;
+        norm.xy *= sin(time);
+        vec4 e = explode(input[i].pos, norm);
+        //pos = e;
+        output.positionH = pos;
+        output.uv = (sign(input[i].pos.xy) + 1.0) / 2.0;
+        OutputStream.Append(output);
+        float4 pos2 = cent + float4(norm, 0) * 2;
+        e = explode(pos2, norm);
+        output.positionH = e;
+        output.uv = (sign(e.xy) + 1.0) / 2.0;
+        OutputStream.Append(output);
+        float4 pos3 = explode(input[next].pos, norm);
+        output.positionH = input[next].pos;
+        output.uv = (sign(pos3) + 1.0) / 2.0;
+        OutputStream.Append(output);
+        OutputStream.RestartStrip();
+    }
+   
     
 }
